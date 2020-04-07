@@ -1,0 +1,238 @@
+	body {
+			font-family: 'Poppins', sans-serif !important;
+		padding-left: 10px !important;
+		padding-right: 10px !important;
+		padding-bottom: 20px !important;
+		padding-top: 20 !important;
+	}
+
+
+	.submitbtn:hover {
+		cursor: pointer;
+	}
+
+	#addProductDiv{
+		text-align: center;
+	}
+
+	#divbtn button{
+		margin-top: 30px;
+	}
+	#morebtn {
+			background: white;
+border: 1px solid #ced4da;
+border-radius: .25rem;
+height: 39px;
+width: 80%;
+font-size: 13px;
+text-transform: uppercase;
+margin-top: 14px;
+	}
+	#submitbtn {
+		background: white;
+		border: 1px solid black;
+		border-radius: 4px;
+		height: 37px;
+		font-weight: bold;
+		font-size: 15px;
+		margin-top: 18px;
+	}   
+
+	.productH {
+			text-transform: uppercase;
+		color: #495057;
+		text-align: left;
+		font-size: 15px;
+		display: block;
+	}   
+
+	.productimgdiv {
+			height: 183px;
+			opacity: 0.8;
+	}
+
+	.productimg{
+			 transition: all .4s ease-in-out;
+	 }
+
+	.productimg:hover{
+			transform: scale(1.1);
+	}
+
+	.products {
+			text-transform: uppercase;
+			height: 32px;
+			display: block;
+			width: 80%;
+			font-size: 13px;
+			margin: 0 auto;
+			margin-bottom:10px;
+	}
+
+	.number {
+		border: 1px solid #ced4da;
+		border-radius: .25rem;
+		color: #495057;
+		padding-left: 15px;
+
+			display: block;
+			width: 80%;
+			font-size: 13px;
+			margin: 0 auto;
+			margin-bottom:10px;
+	}
+
+	form {
+		width: 1633px;
+		margin: 0 auto;
+	}
+
+	.personalInfo {
+		width: 309px;
+		padding: 20px;
+		height: 758px;
+		background: #4ca04469;
+		border: 1px solid #017713;
+		border-radius: 18px;
+		font-size: 17px;
+		margin-right: 22px;
+		margin-bottom: 30px;
+		overflow: auto;
+	}
+
+	.items{
+		width: 243px;
+		float:left;
+		height: 447px;
+		margin-bottom: 30px;
+		border: 1px solid silver;
+		border-radius: 21px;
+		padding: 20px;
+		margin-right: 20px;
+	}
+
+	.middle {
+			width: auto;
+			max-width: 1052px;
+			float: left;
+	}
+
+	.left {
+			float: left;
+	}
+
+	.right{
+			float: right;
+	}
+
+	.personalInfo label{
+		font-size: 17px;
+	}
+
+	.personalInfoInput {
+			width: 90%;
+			color: #535353;
+	}
+
+	.products{
+		height: 36px;
+		display: block;
+	}
+
+	.number{
+		height: 36px;
+		display: block;
+	}
+	
+	.subtotal span{
+			color: #82ae46;
+		font-size: 16px;
+		font-weight:400;
+	}
+
+	#clipboard{
+		background: wheat;
+		padding: 20px;
+		font-size: 17px;
+		width: 250px;
+		border-radius: 10px;
+		color: #515151;
+		text-transform: uppercase;
+		border: 1px solid black;
+		margin-bottom: 20px;
+	}
+	
+	.orderBox {
+		background: pink;
+		font-size: 20px;
+		padding: 20px;
+		margin-bottom: 20px;
+		border-radius: 10px;
+		background: pink;
+		overflow: auto;
+	}
+
+	.orderBox .labeldiv {
+		width: 200px;
+		float: left;
+	}
+	.orderBox .labels {
+			font-weight: bold;
+	}
+
+	.orderBox .content{
+			font-size: 20px;
+			margin-left: 30px;
+	}
+
+	
+
+
+
+@media only screen and (max-width: 1677px) {
+		form {
+				width: 1370px;
+		}
+    .middle{ 
+			width: 789px;
+    }
+	.right {
+			float: left;
+	}
+}
+
+
+
+@media only screen and (max-width: 1423px) {
+		form{
+				width: 1107px;
+		}
+    .middle{ 
+			width: 526px;
+    }
+}
+
+@media only screen and (max-width: 1160px) {
+		form{
+				width: 310px;
+		}
+	.middle{
+			width: 100%;
+			clear: both;
+	}
+
+	.right{
+			margin: 0 auto;
+			clear: both;
+			width: 100%;
+	}
+
+	#clipboard {
+			width: 100%;
+	}
+
+	.items{
+			margin: 0 auto;
+			float: none;
+	}
+}
