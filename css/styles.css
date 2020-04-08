@@ -7,9 +7,6 @@
 	}
 
 
-	.submitbtn:hover {
-		cursor: pointer;
-	}
 
 	#addProductDiv{
 		text-align: center;
@@ -30,6 +27,8 @@ margin-top: 14px;
 	}
 	#submitbtn {
 		background: white;
+		text-transform: uppercase;
+		cursor: pointer;
 		border: 1px solid black;
 		border-radius: 4px;
 		height: 37px;
@@ -82,7 +81,8 @@ margin-top: 14px;
 			margin-bottom:10px;
 	}
 
-	form {
+	#form1 {
+		text-transform: uppercase;
 		width: 1633px;
 		margin: 0 auto;
 	}
@@ -157,40 +157,75 @@ margin-top: 14px;
 		width: 250px;
 		border-radius: 10px;
 		color: #515151;
-		text-transform: uppercase;
 		border: 1px solid black;
 		margin-bottom: 20px;
 	}
 	
 	.orderBox {
-		background: pink;
-		font-size: 20px;
+		width: 400px;
+		margin: auto auto 30px auto;
+		font-size: 16px;
+		background: #5f9ea024;
+		border: 4px solid cadetblue;
 		padding: 20px;
 		margin-bottom: 20px;
 		border-radius: 10px;
-		background: pink;
 		overflow: auto;
 	}
 
 	.orderBox .labeldiv {
-		width: 200px;
+		width: 168px;
 		float: left;
 	}
 	.orderBox .labels {
 			font-weight: bold;
+			display: block;
 	}
 
 	.orderBox .content{
-			font-size: 20px;
-			margin-left: 30px;
+		float: left;
+		display: block;
+		overflow: auto;
+			font-size: 15px;
 	}
 
+	ul {
+			font-size: 15px;
+	}
 	
+	#orderbtn {
+		margin-top: 20px;
+		height: 46px;
+		border-radius: 8px;
+		font-weight: bold;
+		cursor: pointer;
+	}
+
+	.deliverybtn {
+		background: #ffa50014;
+		border: 3px solid orange;
+		color: orange;
+	}
+	
+	.cancelbtn {
+			background: #a2090914;
+			border: 3px solid red;
+			color: red;
+	}
+
+	.plzh {
+			text-align: center;
+				display: block;
+				font-weight: bold;
+				font-size: 26px;
+				color: cornflowerblue;
+		}
+
 
 
 
 @media only screen and (max-width: 1677px) {
-		form {
+		#form1 {
 				width: 1370px;
 		}
     .middle{ 
@@ -204,7 +239,7 @@ margin-top: 14px;
 
 
 @media only screen and (max-width: 1423px) {
-		form{
+		#form1{
 				width: 1107px;
 		}
     .middle{ 
@@ -213,7 +248,7 @@ margin-top: 14px;
 }
 
 @media only screen and (max-width: 1160px) {
-		form{
+		#form1{
 				width: 310px;
 		}
 	.middle{
@@ -235,4 +270,41 @@ margin-top: 14px;
 			margin: 0 auto;
 			float: none;
 	}
+
 }
+
+
+
+@media only screen and (max-width: 507px) {
+
+
+	.orderBox{
+			width: 85%;
+			font-size: 14px;
+	}
+
+	.orderBox .labeldiv {
+		float: none;
+		clear: both;
+	}
+	.orderBox .labels {
+			font-size: 16px;
+	}
+
+	.orderBox .content{
+			margin-bottom: 13px;
+	}
+
+	ul {
+			font-size: 14px;
+	}
+	
+	#orderbtn {
+			font-size: 14px;
+			height: 43px;
+	}
+
+}
+
+
+

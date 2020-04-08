@@ -15,17 +15,158 @@ if($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-//echo "Connected successfully";
+
+function collectData() {
+
+	$numProducts = $_POST['productCounter'];
+	$toNames = array("Karotten", "Kartoffeln", "Radieschen", "Erdbeeren");
+	$quantityByName = array("Karotten" => 0, "Kartoffeln" => 0, "Radieschen" => 0, "Erdbeeren" => 0);
+	$total = 0;
+
+	$fname = $_POST['fname'];
+	$sname = $_POST['sname'];
+	$plz = $_POST['plz'];
+	$city = $_POST['city'];
+	$house = $_POST['house'];
+	$tel = $_POST['tel'];
+	$email = $_POST['email'];
+
+	for($x = 0; $x < $numProducts; $x++) {
+		$product = "products" . $x;
+		$selectedProductNum = $_POST[$product];
+		$selectedProductName = $toNames[$selectedProductNum];
+		$productQuantity = "number" . $x;
+		$quantity = $_POST[$productQuantity];
+		$quantityByName[$selectedProductName] += $quantity;
+		$total += calcSubtotal($selectedProductNum, $quantity);
+	}
+
+	$delivery = $_POST["deliveryCB"];
+	$deliveryCost = 0;
+	if($delivery == "letdeliver")
+			$deliveryCost = 5;
+	$total += $deliveryCost;
+	$orderID = uploadOrderData($quantityByName, $toNames, $delivery, $total);
+	$customerID = uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $orderID);
+
+	if($orderID != -1 && $customerID != -1) {
+			emailCustomer($orderID, $customerID, $email, $toNames, $quantityByName, $total);
+			emailWorkers($total);
+			header("Location: http://meibauer.ml/confirmation.html");
+	}
+
+}
+
+function uploadOrderData($quantityByName, $toNames, $delivery, $total) {
+
+		$sql = "INSERT INTO orders ("; 
+		for($x = 0; $x < count($quantityByName); $x++) {
+			$product = $toNames[$x];
+			$sql = $sql . $product . ", ";
+		}
+
+		$sql = $sql . "delivery, total) VALUES (";
+
+		for($x = 0; $x < count($quantityByName); $x++) {
+			$product = $toNames[$x];
+			$sql = $sql . "'" . $quantityByName[$product] . "', ";
+		}
+
+		$sql = $sql . "'" . $delivery . "', '" . $total . "')";
+		//echo"<br> $sql <br>";
+		//echo $total;
+
+		$orderID = 0;
+		$orderID = executeQuery($sql);
+
+		return $orderID;
+
+}
+
+function uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $orderID) {
+
+		$sql = "INSERT INTO customers (fn, sn, plz, city, housenumber, tel, email, orderID) VALUES
+				('$fname', '$sname', '$plz', '$city', '$house', '$tel', '$email', '$orderID')";
+
+		//echo"<br> $sql <br>";
+
+		return executeQuery($sql);
+
+}
+
+function executeQuery($sql) {
+
+	$createdID = -1;
+  global $conn;
+
+  if($conn->query($sql) === TRUE) {
+	 $createdID = $conn->insert_id;
+  } else {
+     echo "Error: " . $sql . "<br>" . $conn->error;
+  }
+
+  return $createdID;
+
+}
+
+function calcSubtotal($selectedProductNum, $quantity) {
+
+	$productPrices = array(3, 4, 0.45, 5);
+	$productPrice = $productPrices[$selectedProductNum];
+	$subtotal = $productPrice * $quantity;
+	return $subtotal;
+
+}
+
+function emailCustomer($orderID, $customerID, $email, $toNames, $quantityByName, $total) {
+
+		$message = "Folgende Produkte werden geliefert:\n\n";
+		for($x = 0; $x < count($quantityByName); $x++) {
+				$product = $toNames[$x];
+				$quantity = $quantityByName[$product];
+				if($quantity == 0)
+						continue;
+				$message = $message . $quantity . "x " . $product . "\n";
+		}
+
+		$message = $message . "\nBitte halten Sie " . $total . " Euro bereit.\n\n Vielen Dank fuer Ihren Einkauf!\nIhr MeiBauer-Team";
+
+		$to      = $email;
+		$subject = 'MeiBauer-Auftragsbestaetigung';
+		$headers = 'From: meibauer.ml' . "\r\n" .
+			'Reply-To: max.zeindl@gmail.com';
+
+		mail($to, $subject, $message, $headers);
+
+}
+
+function emailWorkers($total) {
+
+		$email1 = "juwal.regev@hotmail.com";
+
+		$message = "Es wurde ein neuer Einkauf in der Hoehe von: " . $total . " Euro getaetigt.\n\n";
+		$message = $message . "Fuer mehr Informationen klicken Sie hier: http://www.meibauer.ml/login.php";
+
+		$to      = $email1;
+		$subject = 'MeiBauer-Auftrag';
+		$headers  = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-type: text/plain; charset=iso-8859-1\r\n";
+
+		mail($to, $subject, $message, $headers);
+
+}
+
+if(isset($_POST['submitbtn']))
+		collectData();
 
 ?>
-
     <!DOCTYPE html>
     <html lang="de">
 
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>MyBauer - Bestellungen</title>
+        <title>MeiBauer - Bestellungen</title>
         <link rel="stylesheet" type="text/css" href="css/styles.css">
  <link rel = "stylesheet"
          href = "https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
@@ -34,7 +175,7 @@ if($conn->connect_error) {
 
     <body>
 
-        <h1 style="text-align: center;">MyBauer Bestellungen</h1>
+        <h1 style="text-align: center; margin-top: 30px;">MeiBauer Bestellungen</h1>
         <br>
         <br>
 
@@ -88,8 +229,8 @@ if($conn->connect_error) {
                             <br>
 
 <div>
-                                <input type="radio" name="deliveryCB" id="letdeliver" value="letdeliver" checked onclick="update(this)">Liefern lassen (5 &euro; Aufpreis)<br>
-                                <input type="radio" name="deliveryCB" id="collect" value="collect" onclick="update(this)">Abholen
+                                <input type="radio" name="deliveryCB" id="letdeliver" value="letdeliver" checked onclick="update(this)"> Liefern lassen (5 &euro; Aufpreis)<br>
+                                <input type="radio" name="deliveryCB" id="collect" value="collect" onclick="update(this)"> Abholen
 </div>
                         </div>
  </div>
@@ -101,7 +242,7 @@ if($conn->connect_error) {
                             <div class="productimgdiv">
                                 <img id="productimg" class="img-fluid productimg" src="img/karotten.jpg" alt="Colorlib Template">
                             </div>
-                            <select id="products" class="custom-select products" name="products" onchange="update()">
+                            <select id="products" class="products custom-select" name="products" onchange="update()">
                                 <option value="0">Karotten</option>
                                 <option value="1">Kartoffeln</option>
                                 <option value="2">Radieschen</option>
@@ -114,7 +255,7 @@ if($conn->connect_error) {
                                 <span>&euro;</span>
 
                                 <div id="addProductDiv">
-                                    <button id="morebtn" type="action" name="submit" onclick="duplicate()">Produkt hinzufuegen</button>
+                                    <button id="morebtn" type="action" name="submit" onclick="duplicate()">Produkt hinzufügen</button>
                                 </div>
 
                             </div>
@@ -136,152 +277,6 @@ if($conn->connect_error) {
                 </div>
  </div>
                 </form>
-
-
-        <?php
-
-function collectData() {
-
-	$numProducts = $_POST['productCounter'];
-	$toNames = array("Karotten", "Kartoffeln", "Radieschen", "Erdbeeren");
-	$quantityByName = array("Karotten" => 0, "Kartoffeln" => 0, "Radieschen" => 0, "Erdbeeren" => 0);
-	$total = 0;
-
-	$fname = $_POST['fname'];
-	$sname = $_POST['sname'];
-	$plz = $_POST['plz'];
-	$city = $_POST['city'];
-	$house = $_POST['house'];
-	$tel = $_POST['tel'];
-	$email = $_POST['email'];
-
-	for($x = 0; $x < $numProducts; $x++) {
-		$product = "products" . $x;
-		$selectedProductNum = $_POST[$product];
-		$selectedProductName = $toNames[$selectedProductNum];
-		$productQuantity = "number" . $x;
-		$quantity = $_POST[$productQuantity];
-		$quantityByName[$selectedProductName] += $quantity;
-		$total += calcSubtotal($selectedProductNum, $quantity);
-	}
-
-	$delivery = $_POST["deliveryCB"];
-	$deliveryCost = 0;
-	if($delivery == "letdeliver")
-			$deliveryCost = 5;
-	$total += $deliveryCost;
-	$orderID = uploadOrderData($quantityByName, $toNames, $delivery, $total);
-	$customerID = uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $orderID);
-
-	if($orderID != -1 && $customerID != -1) {
-			emailCustomer($orderID, $customerID, $email, $toNames, $quantityByName, $total);
-			emailWorkers($total);
-	}
-
-}
-
-function uploadOrderData($quantityByName, $toNames, $delivery, $total) {
-
-		$sql = "INSERT INTO orders ("; 
-		for($x = 0; $x < count($quantityByName); $x++) {
-			$product = $toNames[$x];
-			$sql = $sql . $product . ", ";
-		}
-
-		$sql = $sql . "delivery, total) VALUES (";
-
-		for($x = 0; $x < count($quantityByName); $x++) {
-			$product = $toNames[$x];
-			$sql = $sql . "'" . $quantityByName[$product] . "', ";
-		}
-
-		$sql = $sql . "'" . $delivery . "', '" . $total . "')";
-		//echo"<br> $sql <br>";
-		echo $total;
-
-		$orderID = 0;
-		$orderID = executeQuery($sql);
-
-		return $orderID;
-
-}
-
-function uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $orderID) {
-
-		$sql = "INSERT INTO customers (fn, sn, plz, city, housenumber, tel, email, orderID) VALUES
-				('$fname', '$sname', '$plz', '$city', '$house', '$tel', '$email', '$orderID')";
-
-		//echo"<br> $sql <br>";
-
-		return executeQuery($sql);
-
-}
-
-function executeQuery($sql) {
-
-	$createdID = -1;
-  global $conn;
-
-  if($conn->query($sql) === TRUE) {
-	 $createdID = $conn->insert_id;
-     echo "Query issued successfully";
-  } else {
-     echo "Error: " . $sql . "<br>" . $conn->error;
-  }
-
-  return $createdID;
-
-}
-
-function calcSubtotal($selectedProductNum, $quantity) {
-
-	$productPrices = array(3, 4, 0.45, 5);
-	$productPrice = $productPrices[$selectedProductNum];
-	$subtotal = $productPrice * $quantity;
-	return $subtotal;
-
-}
-
-function emailCustomer($orderID, $customerID, $email, $toNames, $quantityByName, $total) {
-
-		$message = "Folgende Produkte werden geliefert:\n\n";
-		for($x = 0; $x < count($quantityByName); $x++) {
-				$product = $toNames[$x];
-				$quantity = $quantityByName[$product];
-				$message = $message . $quantity . "x " . $product . "\n";
-		}
-
-		$message = $message . "\nBitte halten Sie " . $total . " Euro bereit.\n\n Vielen Dank fuer Ihren Einkauf!\nIhr MyBauer-Team";
-
-		$to      = $email;
-		$subject = 'MyBauer-Auftragsbestaetigung';
-		$headers = 'From: mybauer@shop.com' . "\r\n" .
-			'Reply-To: mybauer@shop.com';
-
-		mail($to, $subject, $message, $headers);
-
-}
-
-function emailWorkers($total) {
-
-		$email1 = "juwal.regev@hotmail.com";
-
-		$message = "Es wurde ein neuer Einkauf in der Hoehe von: " . $total . " Euro getaetigt.\n\n";
-		$message = $message . "Fuer mehr Informationen klicken Sie hier: http://www.mybauer.ml/";
-
-		$to      = $email1;
-		$subject = 'MyBauer-Auftrag';
-		$headers  = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-type: text/plain; charset=iso-8859-1\r\n";
-
-		mail($to, $subject, $message, $headers);
-
-}
-
-if(isset($_POST['submitbtn']))
-		collectData();
-
-?>
 
 
             <script>
@@ -426,7 +421,9 @@ if(isset($_POST['submitbtn']))
 
                 window.onload = update();
             </script>
-
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     </body>
 
     </html>
