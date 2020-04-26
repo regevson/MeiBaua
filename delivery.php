@@ -21,9 +21,32 @@ if($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$toNames = array("Karotten", "Kartoffeln", "Radieschen", "Erdbeeren");
+$toNames = array();
+$quantityByName = array();
 //number of orders (rows in html)
 $rowCount = 0;
+
+
+downloadProducts();
+
+function downloadProducts() {
+
+	global $toNames;
+	global $quantityByName;
+
+	global $conn;
+	$result = $conn->query("SELECT * FROM products WHERE available=1");
+
+	while($row = $result->fetch_assoc()) {
+			$productName = $row['product'];
+
+			$toNames[] = $productName;
+			$quantityByName[$productName] = 0;
+	} 
+
+}
+
+
 
 ?>
 
@@ -33,7 +56,7 @@ $rowCount = 0;
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>MeiBauer - Lieferungsübersicht</title>
+        <title>MeiBaua - Lieferungsübersicht</title>
 
 		<link rel="stylesheet" type="text/css" href="css/styles.css">
         <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;1,100;1,200;1,300&display=swap" rel="stylesheet">
@@ -41,7 +64,8 @@ $rowCount = 0;
 
     <body>
 
-        <h1 style="text-align: center;">MeiBauer Aufträge</h1><br><br>
+		<span><a href="controlpanel.php">zum ControlPanel</a></span>
+        <h1 style="text-align: center;">"MeiBaua" Aufträge</h1><br><br>
 
 
 
@@ -78,6 +102,7 @@ function displayData($customerData, $orderData) {
 		$house_arr = $customerData[5];
 		$tel_arr = $customerData[6];
 		$email_arr = $customerData[7];
+		$paid_arr = $customerData[8];
 
 		//order data
 		$orderID_arr = end($customerData);
@@ -96,6 +121,9 @@ function displayData($customerData, $orderData) {
 						echo "<span class='plzh'>PLZ: " . $currentplz . "</span><br>";
 				}
 				$output = "<div class='orderBox'>
+
+				<p class='paidInfo'>" . $paid_arr[$row] . "</p>
+					
 				<div class='labeldiv'><span class='labels'>Auftragsnummer:</span></div>
 				<span class='content'>" . $orderID_arr[$row] . "</span>
 				<br>
@@ -148,9 +176,11 @@ function displayData($customerData, $orderData) {
 
 				$output = $output . "</ul></div>";
 						
-				$output = $output . "<div style='clear: both; text-align: center;'>
-						<button type='submit' id='orderbtn' class='deliverybtn' value='" . $customerID_arr[$row] . ",done' name='" . $row . "'>Lieferung ist erfolgt</button>
-						<button type='submit' id='orderbtn' class='cancelbtn' value='" . $customerID_arr[$row] . ",cancel' name='" . $row . "'>stornieren</button></div></div>";
+				$output = $output . "<div style='clear: both; text-align: center;'>";
+				if(strcmp($paid_arr[$row], "bezahlt") == true) 
+						$output = $output . "<button type='submit' id='orderbtn' class='paidbtn' value='" . $customerID_arr[$row] . ",paid' name='" . $row . "'>Zahlung eingegangen</button><br>";
+				$output = $output . "<button type='submit' id='orderbtn' class='deliverybtn' value='" . $customerID_arr[$row] . ",done' name='" . $row . "'>Lieferung erfolgt</button><br>
+				<button type='submit' id='orderbtn' class='cancelbtn' value='" . $customerID_arr[$row] . ",cancel' name='" . $row . "'>stornieren</button></div></div>";
 						
 				echo $output;
 
@@ -166,16 +196,25 @@ function displayData($customerData, $orderData) {
 //listen for clicked "Lieferung erfolgt" buttons and delete job 
 for($x = 0; $x < $rowCount; $x++) {
 		if(isset($_POST[$x]))
-				removeJob($_POST[$x]);
+				analyzeButtons($_POST[$x]);
 }
 
+function analyzeButtons($value) {
 
-//contents of $value are of type: <customemrID>,done or <customerID>,cancel
-function removeJob($value) {
+	$customerID = substr($value, 0, strpos($value, ",")); 
 
-		//if $value doesnt contain "cancel" the returnval is 'false'
-		$cancel = strpos($value, "cancel");
-		$customerID = substr($value, 0, strpos($value, ","));
+	//if $value doesnt contain "cancel" the returnval is 'false'
+	if(strpos($value, "cancel"))
+		removeJob($customerID, "cancel");
+	else if(strpos($value, "done"))
+		removeJob($customerID, "done");
+	else
+		confirmPayment($customerID);
+
+}
+
+//contents of $value are of type: <customemrID>,done or <customerID>,cancel or <customerID>,paid
+function removeJob($customerID, $value) {
 
 		global $conn;
 
@@ -200,22 +239,35 @@ function removeJob($value) {
 			echo "Error deleting record: " . $conn->error;
 		}
 
-		emailCustomer($email, $cancel);	
+		emailCustomer($email, $value);	
 			
  		echo "<meta http-equiv='refresh' content='0'>";
 
 }
 
+function confirmPayment($customerID) {
 
-function emailCustomer($email, $cancel) {
+		global $conn;
 
-		if($cancel == false) {
-        	$message = "Ihre MeiBauer-Lieferung ist da und kann verzehrt werden!\n";
-        	$message = $message . "\nVielen Dank fuer Ihren Einkauf!\nIhr MeiBauer-Team";
+		$sql = "UPDATE customers SET paid='1' WHERE customerID='" . $customerID . "'";
+
+		if ($conn->query($sql) !== TRUE) {
+			echo "Error updating record: " . $conn->error;
+		}
+		else
+ 			echo "<meta http-equiv='refresh' content='0'>";
+
+}
+
+function emailCustomer($email, $value) {
+
+		if($value == "done") {
+        	$message = "Ihre MeiBaua-Lieferung ist da und kann verzehrt werden!\n";
+        	$message = $message . "\nVielen Dank fuer Ihren Einkauf!\nIhr MeiBaua-Team";
 		}
 		else{
-        	$message = "Ihre MeiBauer-Lieferung wurde erfolgreich storniert!\n";
-        	$message = $message . "\nIhr MeiBauer-Team";
+        	$message = "Ihre MeiBaua-Lieferung wurde erfolgreich storniert!\n";
+        	$message = $message . "\nIhr MeiBaua-Team";
 		}
 
         for($x = 0; $x < count($quantityByName); $x++) {
@@ -226,8 +278,8 @@ function emailCustomer($email, $cancel) {
 
 
         $to      = $email;
-        $subject = 'MeiBauer-Lieferung';
-        $headers = 'From: meibauer.ml' . "\r\n" .
+        $subject = 'MeiBaua-Lieferung';
+        $headers = 'From: meibaua.ml' . "\r\n" .
             'Reply-To: max.zeindl@gmail.com';
 
         mail($to, $subject, $message, $headers);
@@ -245,6 +297,7 @@ function collectCustomerData() {
 		$house_arr = array();
 		$tel_arr = array();
 		$email_arr = array();
+		$paid_arr= array();
 		$orderID_arr = array();
 		$arrIndex = 0;
 
@@ -260,11 +313,17 @@ function collectCustomerData() {
 				$house_arr[$arrIndex] = $row['housenumber'];
 				$tel_arr[$arrIndex] = $row['tel'];
 				$email_arr[$arrIndex] = $row['email'];
+				$paid = $row['paid'];
+				if($paid == 1)
+					$paid_arr[$arrIndex] = "bezahlt";
+				else
+					$paid_arr[$arrIndex] = "";
 				$orderID_arr[$arrIndex] = $row['orderID'];
 				$arrIndex++;
 		}
 
-		$data_arr = array($customerID_arr, $fn_arr, $sn_arr, $plz_arr, $city_arr, $house_arr, $tel_arr, $email_arr, $orderID_arr);
+		$data_arr = array($customerID_arr, $fn_arr, $sn_arr, $plz_arr, $city_arr, 
+			$house_arr, $tel_arr, $email_arr, $paid_arr, $orderID_arr);
 		return $data_arr;
 
 }
@@ -275,6 +334,7 @@ function collectCustomerData() {
 function collectOrderData($orderID_arr) {
 
 		global $toNames;
+		global $quantityByName;
 
     	$quantityByName_arr = array();
 		$delivery_arr = array();
@@ -287,11 +347,10 @@ function collectOrderData($orderID_arr) {
 
 				$row = getDataFromDB("orders", "orderID", $orderID);
 
-				$quantityByName = array("Karotten" => 0, "Kartoffeln" => 0, "Radieschen" => 0, "Erdbeeren" => 0);
 				//fill up $quantityByName-array with ordered items and quantity
 				for($x = 0; $x < count($quantityByName); $x++) {
 						$product = $toNames[$x];
-						$quantity = $row[strtolower($product)];
+						$quantity = $row[$product];
 						$quantityByName[$product] = $quantity;
 				}
 

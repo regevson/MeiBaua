@@ -14,13 +14,40 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 if($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+$toNames = array(); //productNames
+$prices = array();
+$quantityByName = array();
 
+downloadProducts();
+
+function downloadProducts() {
+
+	//this info gets passed to JavaScript
+	
+	global $toNames;
+	global $prices;
+	global $quantityByName;
+
+	global $conn;
+	$result = $conn->query("SELECT * FROM products WHERE available=1");
+
+	while($row = $result->fetch_assoc()) {
+			$productName = $row['product'];
+			$productPrice = $row['price'];
+
+			$toNames[] = $productName;
+			$prices[] = $productPrice;
+			$quantityByName[$productName] = 0;
+	} 
+
+}
 
 function collectData() {
 
+	global $toNames;
 	$numProducts = $_POST['productCounter'];
-	$toNames = array("Karotten", "Kartoffeln", "Radieschen", "Erdbeeren");
-	$quantityByName = array("Karotten" => 0, "Kartoffeln" => 0, "Radieschen" => 0, "Erdbeeren" => 0);
+	echo $numProducts;
+	global $quantityByName;
 	$total = 0;
 
 	$fname = $_POST['fname'];
@@ -44,16 +71,38 @@ function collectData() {
 	$delivery = $_POST["deliveryCB"];
 	$deliveryCost = 0;
 	if($delivery == "letdeliver")
-			$deliveryCost = 5;
+			$deliveryCost = evalPLZ($plz);
 	$total += $deliveryCost;
 	$orderID = uploadOrderData($quantityByName, $toNames, $delivery, $total);
 	$customerID = uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $orderID);
 
 	if($orderID != -1 && $customerID != -1) {
-			emailCustomer($orderID, $customerID, $email, $toNames, $quantityByName, $total);
-			emailWorkers($total);
-			header("Location: http://meibauer.ml/confirmation.html");
+			//emailCustomer($orderID, $customerID, $email, $toNames, $quantityByName, $total);
+			//emailWorkers($total);
+			header("Location: http://meibaua.ml/confirmation.html");
 	}
+
+}
+
+function evalPLZ($plz) {
+
+	$cost = 0;
+	if(strcmp($plz, "6232") == 0) //string are equal
+		$cost = 1.5;
+	else if(strcmp($plz, "6210") == 0)
+		$cost = 2;
+	else if(strcmp($plz, "6230") == 0)
+		$cost = 2;
+	else if(strcmp($plz, "6233") == 0)
+		$cost = 2;
+	else if(strcmp($plz, "6235") == 0)
+		$cost = 2.5;
+	else if(strcmp($plz, "6200") == 0)
+		$cost = 2.5;
+	else
+		$cost = 10;
+
+	return $cost;
 
 }
 
@@ -129,11 +178,11 @@ function emailCustomer($orderID, $customerID, $email, $toNames, $quantityByName,
 				$message = $message . $quantity . "x " . $product . "\n";
 		}
 
-		$message = $message . "\nBitte halten Sie " . $total . " Euro bereit.\n\n Vielen Dank fuer Ihren Einkauf!\nIhr MeiBauer-Team";
+		$message = $message . "\nBitte halten Sie " . $total . " Euro bereit.\n\n Vielen Dank fuer Ihren Einkauf!\nIhr MeiBaua-Team";
 
 		$to      = $email;
-		$subject = 'MeiBauer-Auftragsbestaetigung';
-		$headers = 'From: meibauer.ml' . "\r\n" .
+		$subject = 'MeiBaua-Auftragsbestaetigung';
+		$headers = 'From: meibaua.ml' . "\r\n" .
 			'Reply-To: max.zeindl@gmail.com';
 
 		mail($to, $subject, $message, $headers);
@@ -145,16 +194,17 @@ function emailWorkers($total) {
 		$email1 = "juwal.regev@hotmail.com";
 
 		$message = "Es wurde ein neuer Einkauf in der Hoehe von: " . $total . " Euro getaetigt.\n\n";
-		$message = $message . "Fuer mehr Informationen klicken Sie hier: http://www.meibauer.ml/login.php";
+		$message = $message . "Fuer mehr Informationen klicken Sie hier: http://www.meibaua.ml/login.php";
 
 		$to      = $email1;
-		$subject = 'MeiBauer-Auftrag';
+		$subject = 'MeiBaua-Auftrag';
 		$headers  = "MIME-Version: 1.0\r\n";
         $headers .= "Content-type: text/plain; charset=iso-8859-1\r\n";
 
 		mail($to, $subject, $message, $headers);
 
 }
+
 
 if(isset($_POST['submitbtn']))
 		collectData();
@@ -166,7 +216,7 @@ if(isset($_POST['submitbtn']))
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>MeiBauer - Bestellungen</title>
+        <title>DaBauernBua- Bestellungen</title>
         <link rel="stylesheet" type="text/css" href="css/styles.css">
  <link rel = "stylesheet"
          href = "https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
@@ -175,7 +225,7 @@ if(isset($_POST['submitbtn']))
 
     <body>
 
-        <h1 style="text-align: center; margin-top: 30px;">MeiBauer Bestellungen</h1>
+        <h1 style="text-align: center; margin-top: 30px;">"DaBauernBua" Bestellungen</h1>
         <br>
         <br>
 
@@ -200,17 +250,17 @@ if(isset($_POST['submitbtn']))
 
                             <label>PLZ:</label>
                             <br>
-                            <input class="personalInfoInput" type="text" id="plz" name="plz" value="6232" required>
+                            <input class="personalInfoInput" type="text" id="plz" name="plz" value="6232" readonly required onchange="update()">
                             <br>
                             <br>
 
                             <label>Ort:</label>
                             <br>
-                            <input class="personalInfoInput" type="text" id="city" name="city" value="Muenster" required>
+                            <input class="personalInfoInput" type="text" id="city" name="city" readonly value="Muenster" required>
                             <br>
                             <br>
 
-                            <label>Hausnummer:</label>
+                            <label>Straße, Hausnummer:</label>
                             <br>
                             <input class="personalInfoInput" type="text" id="house" name="house" value="Bachleiten 302b" required>
                             <br>
@@ -229,8 +279,10 @@ if(isset($_POST['submitbtn']))
                             <br>
 
 <div>
-                                <input type="radio" name="deliveryCB" id="letdeliver" value="letdeliver" checked onclick="update(this)"> Liefern lassen (5 &euro; Aufpreis)<br>
+								<!--
+                                <input type="radio" name="deliveryCB" id="letdeliver" value="letdeliver" checked onclick="update(this)"> Liefern lassen (0 &euro; Aufpreis)<br>
                                 <input type="radio" name="deliveryCB" id="collect" value="collect" onclick="update(this)"> Abholen
+								-->
 </div>
                         </div>
  </div>
@@ -242,11 +294,8 @@ if(isset($_POST['submitbtn']))
                             <div class="productimgdiv">
                                 <img id="productimg" class="img-fluid productimg" src="img/karotten.jpg" alt="Colorlib Template">
                             </div>
+
                             <select id="products" class="products custom-select" name="products" onchange="update()">
-                                <option value="0">Karotten</option>
-                                <option value="1">Kartoffeln</option>
-                                <option value="2">Radieschen</option>
-                                <option value="3">Erdbeeren</option>
                             </select>
 
                             <input type="number" id="number" class="number" name="number" value="0" min="0" onchange="update()">
@@ -266,11 +315,18 @@ if(isset($_POST['submitbtn']))
 
 
 <div class="right">
-                <div id="clipboard" style="height: 321px;">
+                <div id="clipboard" style="height: 500px;">
 
                     <span style="display: block; text-align: center; font-weight: bold;">Einkaufsliste</span>
                     <br>
                     <span id="contents">0x Karotten</span>
+
+					<br>
+					<input type="checkbox" id="agb" required>
+					<span style="text-transform: none; font-size: 15px;">Ich stimme den AGB und dem KSchG zu</span>
+					<br>
+					<input type="checkbox" id="datenschutz" required>
+					<span style="text-transform: none; font-size: 15px;">Die Daten werden nicht an Dritte weitergegeben. Produktneuigkeiten usw.</span>
 
                     <input id="submitbtn" type="submit" form="form1" name="submitbtn" value="Bestellen" onclick="changeID()">
 
@@ -280,9 +336,22 @@ if(isset($_POST['submitbtn']))
 
 
             <script>
-                var productPrices = [3, 4, 0.45, 5];
-                var products_arr = ["Karotten", "Kartoffeln", "Radieschen", "Erdbeeren"];
+				var products_arr = <?php echo json_encode($toNames); ?>;
+				var productPrices = <?php echo json_encode($prices); ?>;
                 var i = 0;
+
+				addOptions();
+				//add options (products) to option-dropdown
+				function addOptions() {
+
+                    var select = document.getElementById('products');
+					for(var i = 0; i < products_arr.length; i++) {
+						var option = document.createElement('option');
+						option.text = products_arr[i];
+						option.value = i;
+						select.add(option);
+					}
+				}
 
                 function duplicate() {
                     var original = document.getElementById('duplicater');
@@ -305,7 +374,7 @@ if(isset($_POST['submitbtn']))
                     //Subtotal of new div gets reset
                     document.getElementById("individualSubtotal").innerHTML = 0;
                     //productimg of new div gets reset
-                    document.getElementById("productimg").src = "img/karotten.jpg";
+                    document.getElementById("productimg").src = "img/" + products_arr[0] + ".jpg";
 
                     //hidden productCounter (for php) gets upated
                     document.getElementById("productCounter").value = i + 2;
@@ -343,6 +412,7 @@ if(isset($_POST['submitbtn']))
                 function update(radiobtn) {
 
                     total = 0;
+					var plz = document.getElementById("plz").value;
                     var clipboard = "";
 
                     for (var x = 0; x <= i; x++) {
@@ -367,7 +437,7 @@ if(isset($_POST['submitbtn']))
                         var productPrice = productPrices[selectedProductVal];
                         var quantity = document.getElementById(number).value;
                         var subtotal = productPrice * quantity;
-                        document.getElementById(individualSubtotal).innerHTML = subtotal;
+                        document.getElementById(individualSubtotal).innerHTML = financial(subtotal);
 
                         total += subtotal;
 
@@ -379,7 +449,11 @@ if(isset($_POST['submitbtn']))
 
                     }
 
-                    clipboard = changeDelivery(radiobtn, clipboard);
+					//calc DeliveryCost
+					var deliveryCost = checkPLZ(plz);
+                    clipboard = clipboard + "<br><br>Lieferung: +" + financial(deliveryCost) + " &euro;<br>";
+
+                    //clipboard = changeDelivery(radiobtn, clipboard, deliveryCost);
 
                     clipboard = clipboard + "------------------------<br>";
                     clipboard = clipboard + "<b>Gesamt: " + financial(total) + " &euro;</b><br>";
@@ -387,25 +461,45 @@ if(isset($_POST['submitbtn']))
 
                 }
 
+				
+
                 function financial(x) {
                     return Number.parseFloat(x).toFixed(2);
                 }
 
-                var currentDeliveryCost = 5;
+				function checkPLZ(plz) {
 
-                function changeDelivery(radiobtn, clipboard) {
+					var cost = 0;
+					if(plz.localeCompare(6232) == 0) //string are equal
+						cost = 1.5;
+					else if(plz.localeCompare(6210) == 0)
+						cost = 2;
+					else if(plz.localeCompare(6230) == 0)
+						cost = 2;
+					else if(plz.localeCompare(6233) == 0)
+						cost = 2;
+					else if(plz.localeCompare(6235) == 0)
+						cost = 2.5;
+					else if(plz.localeCompare(6200) == 0)
+						cost = 2.5;
+					else
+						cost = 10;
+
+					return cost;
+
+				}
+
+
+                function changeDelivery(radiobtn, clipboard, deliveryCost) {
 
                     if (radiobtn != null) {
                         var radioVal = radiobtn.value;
-
                         if (radioVal == "collect")
-                            currentDeliveryCost = 0;
-                        else
-                            currentDeliveryCost = 5;
+                            deliveryCost = 0;
                     }
 
-                    clipboard = clipboard + "<br><br>Lieferung: +" + currentDeliveryCost + " &euro;<br>";
-                    total += currentDeliveryCost;
+					document.getElementById("letdeliver").nextSibling.textContent = "Liefern lassen (" + financial(deliveryCost) + " Euro)";
+                    total += deliveryCost;
 
                     return clipboard;
 
@@ -415,7 +509,7 @@ if(isset($_POST['submitbtn']))
                 function updateImages(productimgid, imgIndex) {
                     var imgName = products_arr[imgIndex];
                     var productimg = document.getElementById(productimgid);
-                    productimg.src = "img/" + imgName.toLowerCase() + ".jpg";
+                    productimg.src = "img/" + imgName + ".jpg";
 
                 }
 
