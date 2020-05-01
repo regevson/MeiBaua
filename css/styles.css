@@ -201,6 +201,12 @@ margin-top: 14px;
 		cursor: pointer;
 	}
 
+	.paidbtn {
+		background: #15c22714;
+		border: 3px solid #74b318;
+		color: #3a9b0e;
+	}
+
 	.deliverybtn {
 		background: #ffa50014;
 		border: 3px solid orange;
@@ -211,6 +217,14 @@ margin-top: 14px;
 			background: #a2090914;
 			border: 3px solid red;
 			color: red;
+	}
+
+	.paidInfo {
+		text-align: center;
+		color: green;
+		font-weight: bold;
+		text-transform: uppercase;
+		font-size: 17px;
 	}
 
 	.plzh {

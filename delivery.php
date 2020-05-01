@@ -103,6 +103,7 @@ function displayData($customerData, $orderData) {
 		$tel_arr = $customerData[6];
 		$email_arr = $customerData[7];
 		$paid_arr = $customerData[8];
+		$date_arr = $customerData[9];
 
 		//order data
 		$orderID_arr = end($customerData);
@@ -123,6 +124,8 @@ function displayData($customerData, $orderData) {
 				$output = "<div class='orderBox'>
 
 				<p class='paidInfo'>" . $paid_arr[$row] . "</p>
+
+				<p class='dateInfo'>" . $date_arr[$row] . "</p>
 					
 				<div class='labeldiv'><span class='labels'>Auftragsnummer:</span></div>
 				<span class='content'>" . $orderID_arr[$row] . "</span>
@@ -298,6 +301,7 @@ function collectCustomerData() {
 		$tel_arr = array();
 		$email_arr = array();
 		$paid_arr= array();
+		$date_arr = array();
 		$orderID_arr = array();
 		$arrIndex = 0;
 
@@ -318,12 +322,13 @@ function collectCustomerData() {
 					$paid_arr[$arrIndex] = "bezahlt";
 				else
 					$paid_arr[$arrIndex] = "";
+				$date_arr[$arrIndex] = $row['purchaseDate'];
 				$orderID_arr[$arrIndex] = $row['orderID'];
 				$arrIndex++;
 		}
 
 		$data_arr = array($customerID_arr, $fn_arr, $sn_arr, $plz_arr, $city_arr, 
-			$house_arr, $tel_arr, $email_arr, $paid_arr, $orderID_arr);
+			$house_arr, $tel_arr, $email_arr, $paid_arr, $date_arr, $orderID_arr);
 		return $data_arr;
 
 }
