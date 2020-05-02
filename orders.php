@@ -17,7 +17,7 @@ if ($conn->connect_error) {
 $toNames        = array(); // names of products
 $prices         = array();
 $quantityByName = array(); // input is productName - output is orderedQuantity of product
-$deliveryCost   = 2.3;
+$deliveryCost   = 1.5;
 $minTotal = 5;
 
 downloadProducts();
@@ -72,6 +72,7 @@ function collectData()
     $house       = $_POST['house'];
     $tel         = $_POST['tel'];
     $email       = $_POST['email'];
+	$date		 = date("l j\. F Y");
     
     for ($x = 0; $x < $numProducts; $x++) {
         $product = "products" . $x;
@@ -104,7 +105,7 @@ function collectData()
     $delivery = "letdeliver"; // current policy (delivery mandatory)
     $total += $deliveryCost; // is fetched from global var declared at top
     $orderID    = uploadOrderData($quantityByName, $toNames, $delivery, $total);
-    $customerID = uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $orderID);
+    $customerID = uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $date, $orderID);
     
     if ($orderID != -1 && $customerID != -1) {
         emailCustomer($orderID, $customerID, $email, $toNames, $quantityByName, $total);
@@ -183,11 +184,11 @@ function uploadOrderData($quantityByName, $toNames, $delivery, $total)
 /*
  * Upload the entered data regarding the customer
  */
-function uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $orderID)
+function uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $date, $orderID)
 {
     
-    $sql = "INSERT INTO customers (fn, sn, plz, city, housenumber, tel, email, orderID) VALUES
-                ('$fname', '$sname', '$plz', '$city', '$house', '$tel', '$email', '$orderID')";
+    $sql = "INSERT INTO customers (fn, sn, plz, city, housenumber, tel, email, purchaseDate, orderID) VALUES
+                ('$fname', '$sname', '$plz', '$city', '$house', '$tel', '$email', '$date', '$orderID')";
     
     //echo"<br> $sql <br>";
     return executeQuery($sql);
@@ -217,9 +218,9 @@ function executeQuery($sql)
 function emailCustomer($orderID, $customerID, $email, $toNames, $quantityByName, $total)
 {
     
-	$deliveryText = "Sie bekommen am Samstag in einer Woche";
+	$deliveryText = "\nDie Produkte werden am Samstag in einer Woche geliefert!";
 	if(evaluateDeliveryDate() == true)
-		$deliveryText = "Sie bekommen diesen Samstag";
+		$deliveryText = "\nDie Produkte werden diesen Samstag geliefert!";
 		
     $headers = 'From: dabauernbua.at' . "\r\n" . 'Reply-To: max.zeindl@gmail.com';
     
@@ -254,13 +255,14 @@ Nachfolgend siehst du deinen Einkauf\n
         $message = $message . $quantity . "x " . $product . "\n";
     }
     
+	$message = $message . $deliveryText;
     $message = $message . "\nBitte zahle bis Mittwoch " . $total . " Euro auf das Konto: IBAN xyz ein.\n\n Alles Gute!";
     
     mail($to, $subject, $message, $headers);
     
 }
 
-function evaluateDelivery() {
+function evaluateDeliveryDate() {
 
 	$currentDate = new DateTime("now", new DateTimeZone("Europe/Vienna"));
     return $currentDate->format('N') < 4; // today is before thursday (deadline)
@@ -301,7 +303,7 @@ function emailWorkers($total)
 </head>
 
 <body>
-	<h1 style="text-align: center; margin-top: 30px;">"DaBauernBua" Bestellungen</h1>
+	<h1 style="text-align: center; margin-top: 30px;">"Da Bauernbua" Bestellungen</h1>
 	<br>
 	<br>
 	<form id="form1" action="#" method="post">
@@ -373,7 +375,7 @@ function emailWorkers($total)
 				<br>
 				<input type="checkbox" id="agb" required> <span style="text-transform: none; font-size: 15px;">Ich stimme den AGB und dem KSchG zu</span>
 				<br>
-				<input type="checkbox" id="datenschutz" required> <span style="text-transform: none; font-size: 15px;">Die Daten werden nicht an Dritte weitergegeben. Produktneuigkeiten usw.</span>
+				<input type="checkbox" id="datenschutz" required> <span style="text-transform: none; font-size: 15px;">Die Daten werden nicht an Dritte weitergegeben</span>
 				<input id="submitbtn" type="submit" form="form1" name="submitbtn" value="Bestellen" onclick="changeID()">
 			</div>
 		</div>

@@ -105,11 +105,6 @@ function addProduct() {
 	$price = $_POST["price"];
 	$type = $_POST["type"];
 	$available = $_POST["available"];
-	if(strcmp($available, "ja") == 0)
-		$available = 1;
-	else
-		$available = 0;
-
 	$info = $_POST["info"];
 
 	addColumn($product); //Add new column 'nameOfNewProduct' to orders-table
@@ -127,11 +122,6 @@ function changeProduct() {
 
 	$product = $_POST["product"];
 	$available = $_POST["available"];
-	if(strcmp($available, "ja") == 0)
-         $available = 1;
-     else
-         $available = 0;
-
 	$info = $_POST["info"];
 
 	$sql = "UPDATE `products` SET `available` = '" . $available . "', `info` = '" . $info. "' WHERE `product` = '" . $product . "'";
