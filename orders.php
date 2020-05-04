@@ -16,6 +16,8 @@ if ($conn->connect_error) {
 
 $toNames        = array(); // names of products
 $prices         = array();
+$types			= array();
+$units		    = array();
 $quantityByName = array(); // input is productName - output is orderedQuantity of product
 $deliveryCost   = 1.5;
 $minTotal = 7;
@@ -32,6 +34,8 @@ function downloadProducts()
     // this info gets passed to JavaScript
     global $toNames;
     global $prices;
+    global $types;
+    global $units;
     global $quantityByName;
     
     global $conn;
@@ -40,9 +44,13 @@ function downloadProducts()
     while ($row = $result->fetch_assoc()) {
         $productName  = $row['product'];
         $productPrice = $row['price'];
+        $productType  = $row['type'];
+        $productUnit  = $row['unit'];
         
         $toNames[]                    = $productName;
         $prices[]                     = $productPrice;
+        $types[]                     = $productType;
+        $units[]                     = $productUnit;
         $quantityByName[$productName] = 0; // as customer hasn't entered quantity yet
     }
     
@@ -359,13 +367,14 @@ function emailWorkers($total)
 				<div class="productimgdiv">
 					<img id="productimg" class="img-fluid productimg" src="img/karotten.jpg" alt="Colorlib Template">
 				</div>
-				<select id="products" class="products custom-select" name="products" onchange="update()"></select>
+				<select id="products" class="products custom-select" name="products" onchange="update()">
+				</select>
 				<input type="number" id="number" class="number" name="number" value="0" min="0" onchange="update()">
-				<div class="subtotal" align="center"> <span id="individualSubtotal">0</span><span> &euro;</span>
+				<div class="subtotal" align="center"> <span class="individualSubtotal">0</span><span> &euro;</span>
 				</div>
 					<div id="addProductDiv">
-						<button id="addbtn" class="morebtn" type="button" onclick="duplicate()">Produkt hinzufügen</button>
-						<button id="removebtn" value="" class="morebtn" style="display: none;" type="button" onclick="remove(this)">Produkt entfernen</button>
+						<button class="addbtn morebtn" type="button" onclick="duplicate()">Produkt hinzufügen</button>
+						<button class="removebtn morebtn" style="display: none;" type="button" onclick="remove(this)">Produkt entfernen</button>
 					</div>
 				</div>
 			</div>
@@ -387,9 +396,17 @@ function emailWorkers($total)
 
 var products_arr = <?php echo json_encode($toNames); ?> ; // stores names of products
 var productPrices = <?php echo json_encode($prices); ?> ; // stores prices of products
-var i = 0; // counts number of added products
+var productTypes = <?php echo json_encode($types); ?> ; // stores prices of products
+var units = <?php echo json_encode($units); ?> ; // stores prices of products
 
+var i = 0; // counts number of added products
+var boxes = []; // all boxes are stored in here
+
+var original = document.getElementById('duplicater'); 
 addOptions();
+var originalClone = original.cloneNode(true); // keep this as template for new boxes to clone from
+boxes.push(original); // add first box
+
 
 /* 
  * Add options (products) to option-dropdown
@@ -398,10 +415,15 @@ function addOptions() {
 
     var select = document.getElementById('products');
     for (var i = 0; i < products_arr.length; i++) {
+		var optGroup = document.createElement('OPTGROUP');
+    	optGroup.label = productTypes[i];
+
         var option = document.createElement('option');
-        option.text = products_arr[i];
+        option.text = products_arr[i] + " (" + units[i] + ")";
         option.value = i; // value is index of product in @products_arr
-        select.add(option);
+
+        optGroup.appendChild(option);
+        select.appendChild(optGroup);
     }
 
 }
@@ -411,30 +433,22 @@ function addOptions() {
  */
 function duplicate() {
 
-    var original = document.getElementById('duplicater');
-    var oldAddProductBtn = document.getElementById("addbtn");
-    var removeButton = document.getElementById("removebtn");
-    var clone = original.cloneNode(true); // "deep" clone
-    // remove old button
-    oldAddProductBtn.outerHTML = ""; // only most recent product-"box" can add products
-    removeButton.style.display = "inline"; // make button that removes box visible on old box
+    var oldBox = boxes[boxes.length - 1];
+    var clone = originalClone.cloneNode(true); // "deep" clone from template where content is set to default
+    oldBox.parentNode.appendChild(clone);
+	boxes.push(clone);
 
-    changeID();
+    // remove old add-button
+	var oldAddBtn = oldBox.getElementsByClassName("addbtn")[0];
+    oldAddBtn.outerHTML = ""; // only most recent product-"box" can add products
+	// display remove-button
+	var removeBtn = oldBox.getElementsByClassName("removebtn")[0];
+    removeBtn.style.display = "inline"; // make button that removes box visible on old box
 
-    /*
-     * new duplicator has id: duplicator (without i at the end)
-     * and elements inside have ids: ___ (without i at the end)
-     */
-    original.parentNode.appendChild(clone);
     // Heaading: "Producti", of new div gets updated
-    document.getElementById("productH").innerHTML = "Produkt " + (i + 2);
-    // Quantity of new div gets reset
-    document.getElementById("number").value = 0;
-    // Subtotal of new div gets reset
-    document.getElementById("individualSubtotal").innerHTML = 0;
-    // productimg of new div gets reset
-    document.getElementById("productimg").src = "img/" + products_arr[0] + ".jpg";
-
+	var productH = clone.getElementsByClassName("productH")[0];
+	productH.innerHTML = "Produkt " + (i + 2);
+	
     // hidden productCounter (for php) gets upated
     document.getElementById("productCounter").value = i + 2;
 
@@ -456,46 +470,13 @@ function duplicate() {
 function remove(obj) { 
 
 	var box = obj.parentElement.parentElement;
-	box.style.display = "none"; 
 
-	var val = obj.value; // suffix of elements in box
-	var number = document.getElementById("number" + val);
-	number.value = 0; // as it was removed by user
+	var boxIndex = boxes.indexOf(box);
+	boxes.splice(boxIndex, 1);
+	box.parentNode.removeChild(box);
+    document.getElementById("productCounter").value = boxes.length;
 
 	update();
-
-}
-
-/*
- * As a new product-box was added, the elements of the "old" one
- * have to be adapted from: ___ to ___i
- */
-function changeID() {
-
-    // old duplicator gets id: duplicatori
-    document.getElementById("duplicater").setAttribute("id", "duplicater" + i);
-
-    // old productHeading gets id: producti 
-    document.getElementById("productH").setAttribute("id", "product" + i);
-
-    // elements inside old duplicator get ids: ___i
-    document.getElementById("products").setAttribute("name", "products" + i);
-    document.getElementById("products").setAttribute("id", "products" + i);
-
-    // old productimg gets id: ___i
-    document.getElementById("productimg").setAttribute("id", "productimg" + i);
-
-    // old quantity-input gets id: ___i
-    document.getElementById("number").setAttribute("name", "number" + i);
-    document.getElementById("number").setAttribute("id", "number" + i);
-
-    // old individualSubtotal-output gets id: ___i
-    document.getElementById("individualSubtotal").setAttribute("id", "individualSubtotal" + i);
-	
-	// change value to ___value of box
-    document.getElementById("removebtn").setAttribute("value", i);
-	// change id to (any, doen't matter) id (as it never gets called again by id)
-    document.getElementById("removebtn").setAttribute("id", "removebtn" + i);
 
 }
 
@@ -505,44 +486,41 @@ function changeID() {
  */
 function update(radiobtn) {
 
-    total = 0; // total value of purchase
-    var plz = document.getElementById("plz").value;
+	var total = 0;
     var clipboard = ""; // shopping basket
+    var plz = document.getElementById("plz").value;
 
-    // get info of every product-box
-    for (var x = 0; x <= i; x++) {
-        var productimg = "productimg";
-        var products = "products"; // productName
-        var number = "number"; // quantity
-        var individualSubtotal = "individualSubtotal";
+	// update content inside every box
+	for(var i = 0; i < boxes.length; i++) {
 
-        // as last product has ids: "product" and "number" and ... instead of "producti" and "numberi"
-        if (x != i) {
-            productimg = productimg + x;
-            products = products + x;
-            number = number + x;
-            individualSubtotal = individualSubtotal + x;
-        }
+		var box = boxes[i];
+		updateID(box, i); // so PHP can talk to individual objects
+		var productH = box.getElementsByClassName("productH")[0];
+		var productimg = box.getElementsByClassName("productimg")[0];
+		var products = box.getElementsByClassName("products")[0];
+		var number = box.getElementsByClassName("number")[0];
+		var indivSubtotal = box.getElementsByClassName("individualSubtotal")[0];
 
-        // update subtotal
-        var dropdownObj = document.getElementById(products); // select-Obj
-        var selectedProductVal = dropdownObj.value; // value of selected product
+        productH.innerHTML = "Produkt " + (i+1); // value of selected product
+        var selectedProductVal = products.value; // value of selected product
         var productPrice = productPrices[selectedProductVal];
-        var quantity = document.getElementById(number).value;
-		if(quantity == 0)
-			continue;
+        var quantity = number.value;
+		
         var subtotal = productPrice * quantity;
-        document.getElementById(individualSubtotal).innerHTML = financial(subtotal);
-
-        total += subtotal;
+        indivSubtotal.innerHTML = financial(subtotal);
 
         updateImages(productimg, selectedProductVal);
 
-        // update clipboard content
-        clipboard = clipboard + quantity + "x " + dropdownObj.options[dropdownObj.selectedIndex].text +
-            '<br><i>\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0' + financial(subtotal) + " &euro;</i><br>";
+		if(quantity == 0)
+			continue;
 
-    }
+        total += subtotal;
+
+
+        // update clipboard content
+        clipboard = clipboard + quantity + "x " + products.options[products.selectedIndex].text +
+            '<br><i>\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0' + financial(subtotal) + " &euro;</i><br>";
+	}
 
     // calc deliveryCost
     var deliveryCost = checkPLZ(plz);
@@ -557,6 +535,19 @@ function update(radiobtn) {
 
 }
 
+/*
+ * Enumerate the ids of the objects inside the boxes (@products and @number)
+ * incrementally to allow PHP to retrieve their individual values
+ */
+function updateID(box, index) {
+
+	var products = box.getElementsByClassName("products")[0];
+	products.setAttribute("name", "products" + index);
+
+	var number = box.getElementsByClassName("number")[0];
+	number.setAttribute("name", "number" + index);
+
+}
 
 /*
  * Financial rounding
@@ -567,13 +558,12 @@ function financial(x) {
 
 /*
  * Updates the image source
- * @productimgid is the id of the img to be updated, @imgIndex is the index of the img into the @products_array
+ * @productimg is the img to be updated, @imgIndex is the index of the img into the @products_array
  *
  */
-function updateImages(productimgid, imgIndex) {
+function updateImages(productimg, imgIndex) {
 
     var imgName = products_arr[imgIndex];
-    var productimg = document.getElementById(productimgid);
     productimg.src = "img/" + imgName + ".jpg";
 
 }
@@ -622,7 +612,6 @@ function changeDelivery(radiobtn, clipboard, deliveryCost) {
     return clipboard;
 
 }
-
 
 
 window.onload = update();

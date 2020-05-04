@@ -57,6 +57,12 @@ if($conn->connect_error) {
 		<br>
 		<br>
 
+		<label>Produktart:</label>
+		<br>
+		<input class="personalInfoInput" type="text" id="type" name="type" value="Obst" required onchange="update()">
+		<br>
+		<br>
+
 		<label>Verfuegbar ja/nein:</label>
 		<br>
 		<input class="personalInfoInput" type="text" id="type" name="available" value="ja" required onchange="update()">
@@ -104,14 +110,15 @@ function addProduct() {
 	$product = $_POST["product"];
 	$price = $_POST["price"];
 	$type = $_POST["type"];
+	$unit = $_POST["unit"];
 	$available = $_POST["available"];
 	$info = $_POST["info"];
 
 	addColumn($product); //Add new column 'nameOfNewProduct' to orders-table
 
 
-  $sql = "INSERT INTO products (product, price, type, available, info) VALUES
-                ('$product', '$price', '$type', '$available', '$info')";
+  $sql = "INSERT INTO products (product, price, type, unit, available, info) VALUES
+                ('$product', '$price', '$type', '$unit', '$available', '$info')";
 
         return executeQuery($sql);
 

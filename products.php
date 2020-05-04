@@ -26,7 +26,7 @@ function downloadProducts() {
 
 	$toNames        = array(); // names of products
 	$prices         = array();
-	$type           = array();
+	$unit		    = array();
 	$availability   = array();
 	$info           = array();
    
@@ -35,17 +35,17 @@ function downloadProducts() {
     while ($row = $result->fetch_assoc()) {
         $toNames[] = $row['product'];
         $prices[] = $row['price'];
-        $type[] = $row['type'];
+        $unit[] = $row['unit'];
         $availability[] = $row['available'];
         $info[] = $row['info'];
     }
 
-	printProducts($toNames, $prices, $type, $availability, $info, true);
+	printProducts($toNames, $prices, $unit, $availability, $info, true);
     
 }
 
 
-function printProducts($toNames, $prices, $type, $availability, $info, $printAvailableProducts) {
+function printProducts($toNames, $prices, $unit, $availability, $info, $printAvailableProducts) {
 
 	if($printAvailableProducts == true) {
 		echo '<h1 style="text-align: center; margin-top: 30px;">"Da Bauernbua" Produkte</h1>
@@ -53,11 +53,10 @@ function printProducts($toNames, $prices, $type, $availability, $info, $printAva
 		<br>';
 	}
 	
-	else {
+	else 
 		echo '<h2 style="clear: both;">Noch im Wachstum:</h2>';
-	}
 
-	echo '<div style="padding-left: 30px;">';
+	echo '<div class="wrapper" style="padding-left: 30px;">';
 
 	for($p = 0; $p < count($toNames); $p++) {
 
@@ -75,13 +74,14 @@ function printProducts($toNames, $prices, $type, $availability, $info, $printAva
 
 
 
-		echo '<div id="duplicater" class="items" style="margin-bottom: 30px; height: 370px; opacity:' . $opacity . '">
+		echo '<div id="duplicater" class="dup_products items" style="opacity:' . $opacity . '">
 									' . $availhtml . '<br>
 						<div class="productimgdiv">
 							<img id="productimg" class="img-fluid productimg" src="img/' . $toNames[$p] . '.jpg" alt="' . $toNames[$p] . '">
 						</div>
-						<span id="products" class="products" name="products" style="font-weight: bold; font-size: 16px; text-align: center;">' . $toNames[$p] . '</span>
-						<div class="subtotal" align="center"> <span id="individualSubtotal">' . $prices[$p] . '</span>
+						<span id="products" class="products products_products" name="products">' . $toNames[$p] . '</span>
+						<span id="products" class="products products_products" name="products" style="font-size: 12px;">(' . $unit[$p] . ')</span>
+						<div class="subtotal" align="center" style="margin-top:22px;"> <span id="individualSubtotal">' . $prices[$p] . '</span>
 							<span>&euro;</span>
 						</div>
 					</div>
@@ -94,7 +94,7 @@ function printProducts($toNames, $prices, $type, $availability, $info, $printAva
 
 			
 			if($printAvailableProducts == true)
-				printProducts($toNames, $prices, $type, $availability, $info, false);
+				printProducts($toNames, $prices, $unit, $availability, $info, false);
 
 
 }

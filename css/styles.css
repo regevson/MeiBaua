@@ -27,6 +27,7 @@ margin-top: 14px;
 	}
 	#submitbtn {
 		background: white;
+		display: block;
 		text-transform: uppercase;
 		cursor: pointer;
 		border: 1px solid black;
@@ -66,6 +67,15 @@ margin-top: 14px;
 			font-size: 13px;
 			margin: 0 auto;
 			margin-bottom:10px;
+	}
+
+	.products_products {
+		font-weight: bold;
+		font-size: 16px;
+		text-align: center;
+		height: auto !important;
+		overflow: auto;
+		width: auto;
 	}
 
 	.number {
@@ -236,6 +246,16 @@ margin-top: 14px;
 		}
 
 
+	.dup_products {
+		height: 370px;
+	}
+
+	.wrapper {
+		margin: 0 auto;
+		width: 1350px;
+	}
+
+
 
 
 @media only screen and (max-width: 1677px) {
@@ -290,12 +310,34 @@ margin-top: 14px;
 		height: 106px;
 	}
 
+	.dup_products {
+		margin-bottom: 30px;
+		height: 300px !important;
+	}
+
 	.morebtn {
 		width: 105%;
 	}
 
+	.products_products {
+		font-size: 13px;
+
+	}
+	.wrapper {
+		width: 500px;
+		margin: 0 auto;
+	}
+
 }
 
+@media only screen and (max-width: 523px) {
+
+	body {
+		padding-left: 0;
+	}
+	.wrapper {
+		width: 360px;
+}
 
 
 @media only screen and (max-width: 507px) {
