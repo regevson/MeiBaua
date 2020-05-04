@@ -1943,6 +1943,7 @@ pre code {
   .table-responsive-sm > .table-bordered {
     border: 0;
   }
+
 }
 @media (max-width: 767.98px) {
   .table-responsive-md {
@@ -10353,6 +10354,7 @@ margin-left: -11.5% !important;
 @media (min-width: 768px) {
   .timeline:before {
     left: 50%;
+	height: 1100px;
   }
   .timeline > li {
     min-height: 100px;
@@ -10432,6 +10434,17 @@ margin-left: -11.5% !important;
 }
 
 
+@media (max-width: 450px) {
+
+	.masthead-heading {
+		font-size: 33px !important;
+	}
+
+	.section-heading {
+		font-size: 25px !important;
+	}
+
+}
 
 
 

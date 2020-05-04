@@ -18,7 +18,7 @@ $toNames        = array(); // names of products
 $prices         = array();
 $quantityByName = array(); // input is productName - output is orderedQuantity of product
 $deliveryCost   = 1.5;
-$minTotal = 5;
+$minTotal = 7;
 
 downloadProducts();
 
@@ -91,7 +91,7 @@ function collectData()
 
 	global $minTotal;
 	if($total < $minTotal) {
-		echo "<script>alert('Mindestbestellwert ist 5 Euro :)')</script>";
+		echo "<script>alert('Mindestbestellwert ist 7 Euro :)')</script>";
 		return;
 	}
     
@@ -361,10 +361,11 @@ function emailWorkers($total)
 				</div>
 				<select id="products" class="products custom-select" name="products" onchange="update()"></select>
 				<input type="number" id="number" class="number" name="number" value="0" min="0" onchange="update()">
-				<div class="subtotal" align="center"> <span id="individualSubtotal">0</span>
-					<span>&euro;</span>
+				<div class="subtotal" align="center"> <span id="individualSubtotal">0</span><span> &euro;</span>
+				</div>
 					<div id="addProductDiv">
-						<button id="morebtn" type="action" name="submit" onclick="duplicate()">Produkt hinzufügen</button>
+						<button id="addbtn" class="morebtn" type="button" onclick="duplicate()">Produkt hinzufügen</button>
+						<button id="removebtn" value="" class="morebtn" style="display: none;" type="button" onclick="remove(this)">Produkt entfernen</button>
 					</div>
 				</div>
 			</div>
@@ -411,10 +412,12 @@ function addOptions() {
 function duplicate() {
 
     var original = document.getElementById('duplicater');
-    var oldAddProductBtn = document.getElementById("addProductDiv");
+    var oldAddProductBtn = document.getElementById("addbtn");
+    var removeButton = document.getElementById("removebtn");
     var clone = original.cloneNode(true); // "deep" clone
-    //remove old button
+    // remove old button
     oldAddProductBtn.outerHTML = ""; // only most recent product-"box" can add products
+    removeButton.style.display = "inline"; // make button that removes box visible on old box
 
     changeID();
 
@@ -423,27 +426,43 @@ function duplicate() {
      * and elements inside have ids: ___ (without i at the end)
      */
     original.parentNode.appendChild(clone);
-    //Heaading: "Producti", of new div gets updated
+    // Heaading: "Producti", of new div gets updated
     document.getElementById("productH").innerHTML = "Produkt " + (i + 2);
-    //Quantity of new div gets reset
+    // Quantity of new div gets reset
     document.getElementById("number").value = 0;
-    //Subtotal of new div gets reset
+    // Subtotal of new div gets reset
     document.getElementById("individualSubtotal").innerHTML = 0;
-    //productimg of new div gets reset
+    // productimg of new div gets reset
     document.getElementById("productimg").src = "img/" + products_arr[0] + ".jpg";
 
-    //hidden productCounter (for php) gets upated
+    // hidden productCounter (for php) gets upated
     document.getElementById("productCounter").value = i + 2;
 
-    //clipboardHeight gets adjusted
+    // clipboardHeight gets adjusted
     var clipboardHeight = document.getElementById("clipboard").clientHeight;
     clipboardHeight += 55;
     document.getElementById("clipboard").style.height = clipboardHeight + "px";
 
     i++;
 
-    //update clipboard with new entry of clone
+    // update clipboard with new entry of clone
     update();
+
+}
+
+/*
+ * Remove deleted box
+ */
+function remove(obj) { 
+
+	var box = obj.parentElement.parentElement;
+	box.style.display = "none"; 
+
+	var val = obj.value; // suffix of elements in box
+	var number = document.getElementById("number" + val);
+	number.value = 0; // as it was removed by user
+
+	update();
 
 }
 
@@ -453,25 +472,30 @@ function duplicate() {
  */
 function changeID() {
 
-    //old duplicator gets id: duplicatori
+    // old duplicator gets id: duplicatori
     document.getElementById("duplicater").setAttribute("id", "duplicater" + i);
 
-    //old productHeading gets id: producti 
+    // old productHeading gets id: producti 
     document.getElementById("productH").setAttribute("id", "product" + i);
 
-    //elements inside old duplicator get ids: ___i
+    // elements inside old duplicator get ids: ___i
     document.getElementById("products").setAttribute("name", "products" + i);
     document.getElementById("products").setAttribute("id", "products" + i);
 
-    //old productimg gets id: ___i
+    // old productimg gets id: ___i
     document.getElementById("productimg").setAttribute("id", "productimg" + i);
 
-    //old quantity-input gets id: ___i
+    // old quantity-input gets id: ___i
     document.getElementById("number").setAttribute("name", "number" + i);
     document.getElementById("number").setAttribute("id", "number" + i);
 
-    //old individualSubtotal-output gets id: ___i
+    // old individualSubtotal-output gets id: ___i
     document.getElementById("individualSubtotal").setAttribute("id", "individualSubtotal" + i);
+	
+	// change value to ___value of box
+    document.getElementById("removebtn").setAttribute("value", i);
+	// change id to (any, doen't matter) id (as it never gets called again by id)
+    document.getElementById("removebtn").setAttribute("id", "removebtn" + i);
 
 }
 
@@ -492,7 +516,7 @@ function update(radiobtn) {
         var number = "number"; // quantity
         var individualSubtotal = "individualSubtotal";
 
-        //as last product has ids: "product" and "number" and ... instead of "producti" and "numberi"
+        // as last product has ids: "product" and "number" and ... instead of "producti" and "numberi"
         if (x != i) {
             productimg = productimg + x;
             products = products + x;
@@ -500,11 +524,13 @@ function update(radiobtn) {
             individualSubtotal = individualSubtotal + x;
         }
 
-        //update subtotal
+        // update subtotal
         var dropdownObj = document.getElementById(products); // select-Obj
         var selectedProductVal = dropdownObj.value; // value of selected product
         var productPrice = productPrices[selectedProductVal];
         var quantity = document.getElementById(number).value;
+		if(quantity == 0)
+			continue;
         var subtotal = productPrice * quantity;
         document.getElementById(individualSubtotal).innerHTML = financial(subtotal);
 
@@ -522,7 +548,7 @@ function update(radiobtn) {
     var deliveryCost = checkPLZ(plz);
     clipboard = clipboard + "<br><br>Lieferung: +" + financial(deliveryCost) + " &euro;<br>";
 
-    //clipboard = changeDelivery(radiobtn, clipboard, deliveryCost);
+    // clipboard = changeDelivery(radiobtn, clipboard, deliveryCost);
     total += deliveryCost;
 
     clipboard = clipboard + "------------------------<br>";
@@ -559,7 +585,7 @@ function checkPLZ(plz) {
 
     var cost = 0;
 
-    if (plz.localeCompare(6232) == 0) //string are equal
+    if (plz.localeCompare(6232) == 0) // string are equal
         cost = 1.5;
     else if (plz.localeCompare(6210) == 0)
         cost = 2;

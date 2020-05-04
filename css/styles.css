@@ -15,7 +15,7 @@
 	#divbtn button{
 		margin-top: 30px;
 	}
-	#morebtn {
+	.morebtn {
 			background: white;
 border: 1px solid #ced4da;
 border-radius: .25rem;
@@ -281,8 +281,17 @@ margin-top: 14px;
 	}
 
 	.items{
-			margin: 0 auto;
-			float: none;
+		width: 135px;
+		height: 370px;
+		float: left;
+	}
+
+	.productimgdiv {
+		height: 106px;
+	}
+
+	.morebtn {
+		width: 105%;
 	}
 
 }
