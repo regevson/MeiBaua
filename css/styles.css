@@ -16,14 +16,14 @@
 		margin-top: 30px;
 	}
 	.morebtn {
-			background: white;
-border: 1px solid #ced4da;
-border-radius: .25rem;
-height: 39px;
-width: 80%;
-font-size: 13px;
-text-transform: uppercase;
-margin-top: 14px;
+		background: white;
+		border: 1px solid #ced4da;
+		border-radius: .25rem;
+		height: 39px;
+		width: 80%;
+		font-size: 13px;
+		text-transform: uppercase;
+		margin-top: 14px;
 	}
 	#submitbtn {
 		background: white;
@@ -39,7 +39,8 @@ margin-top: 14px;
 	}   
 
 	.productH {
-			text-transform: uppercase;
+		text-transform: uppercase;
+		margin-left: 5px;
 		color: #495057;
 		text-align: left;
 		font-size: 15px;
@@ -49,6 +50,7 @@ margin-top: 14px;
 	.productimgdiv {
 			height: 183px;
 			opacity: 0.8;
+			margin-bottom: 2px;
 	}
 
 	.productimg{
@@ -74,8 +76,9 @@ margin-top: 14px;
 		font-size: 16px;
 		text-align: center;
 		height: auto !important;
-		overflow: auto;
 		width: auto;
+		overflow:auto;
+		word-wrap: break-word;
 	}
 
 	.number {
@@ -113,12 +116,21 @@ margin-top: 14px;
 	.items{
 		width: 243px;
 		float:left;
-		height: 447px;
+		height: auto;
+		overflow: auto;
 		margin-bottom: 30px;
 		border: 1px solid silver;
 		border-radius: 21px;
-		padding: 20px;
+		padding: 20px 5px 20px 5px;
 		margin-right: 20px;
+	}
+
+	.banner {
+		height: auto;
+		background: #ff000014;
+		padding: 20px;
+		border-left: 7px solid red;
+		font-size: 18px;
 	}
 
 	.middle {
@@ -165,6 +177,7 @@ margin-top: 14px;
 		padding: 20px;
 		font-size: 17px;
 		width: 250px;
+		height: 440px;
 		border-radius: 10px;
 		color: #515151;
 		border: 1px solid black;
@@ -245,17 +258,22 @@ margin-top: 14px;
 				color: cornflowerblue;
 		}
 
-
-	.dup_products {
-		height: 370px;
-	}
-
 	.wrapper {
 		margin: 0 auto;
 		width: 1350px;
 	}
 
-
+	.typesubheading {
+		font-weight: 600;
+		font-size: 16px;
+		margin-bottom: -16px;
+		display: block;
+		text-transform: uppercase;
+		background: #009510;
+		padding: 10px;
+		color: white;
+		border-radius: 14px;
+	}
 
 
 @media only screen and (max-width: 1677px) {
@@ -311,12 +329,11 @@ margin-top: 14px;
 	}
 
 	.dup_products {
-		margin-bottom: 30px;
-		height: 300px !important;
+		height: auto !important;
 	}
 
 	.morebtn {
-		width: 105%;
+		width: 100%;
 	}
 
 	.products_products {
@@ -337,6 +354,7 @@ margin-top: 14px;
 	}
 	.wrapper {
 		width: 360px;
+	}
 }
 
 
@@ -367,6 +385,11 @@ margin-top: 14px;
 	#orderbtn {
 			font-size: 14px;
 			height: 43px;
+	}
+
+	.wrapper {
+		padding-left: 10px;
+		width: 320px;
 	}
 
 }

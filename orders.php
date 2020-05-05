@@ -314,6 +314,18 @@ function emailWorkers($total)
 	<h1 style="text-align: center; margin-top: 30px;">"Da Bauernbua" Bestellungen</h1>
 	<br>
 	<br>
+		<div class="banner">
+
+			<input form="form1" type="checkbox" id="delivery" required> <span style="text-transform: none; font-size: 15px;">
+				Ich habe verstanden, dass ich bis Mittwoch um 23:59 bestellen und bezahlen muss, damit ich die Lieferung am darauffolgenden Samstag bekomme.
+				<br>Wird später bezahlt, bekomme ich die Produkte am Samstag eine Woche später.<br><br>
+				<b>Empfänger:</b> Da Bauernbua<br>
+				<b>IBAN:</b> AT062050800001507003<br>
+				<b>Verwendungszweck:</b> Bestellnummer (wird per Mail zugestellt) und Vorname/Nachname
+			</span>
+		</div>
+	<br>
+	<br>
 	<form id="form1" action="#" method="post">
 		<input type="hidden" id="productCounter" name="productCounter" value="1"></input>
 		<div class="left">
@@ -335,7 +347,7 @@ function emailWorkers($total)
 				<br>
 				<label>Ort:</label>
 				<br>
-				<input class="personalInfoInput" type="text" id="city" name="city" readonly value="Muenster" required>
+				<input class="personalInfoInput" type="text" id="city" name="city" readonly value="Münster" required>
 				<br>
 				<br>
 				<label>Straße, Hausnummer:</label>
@@ -345,7 +357,7 @@ function emailWorkers($total)
 				<br>
 				<label>Telefonnummer:</label>
 				<br>
-				<input class="personalInfoInput" type="tel" id="tel" name="tel" value="04993849348" required>
+				<input class="personalInfoInput" type="tel" id="tel" name="tel" value="">
 				<br>
 				<br>
 				<label>E-Mail:</label>
@@ -380,12 +392,12 @@ function emailWorkers($total)
 			</div>
 		</div>
 		<div class="right">
-			<div id="clipboard" style="height: 500px;"> <span style="display: block; text-align: center; font-weight: bold;">Einkaufsliste</span>
+			<div id="clipboard"> <span style="display: block; text-align: center; font-weight: bold;">Einkaufsliste</span>
 				<br> <span id="contents">0x Karotten</span>
 				<br>
-				<input type="checkbox" id="agb" required> <span style="text-transform: none; font-size: 15px;">Ich stimme den AGB und dem KSchG zu</span>
+				<input type="checkbox" id="agb" required> <span style="text-transform: none; font-size: 15px;">Ich stimme den <a href="img/agb.pdf" target="blank">
+				AGB</a> und <a href="img/datenschutz.pdf" target=_blank">Datenschutzbestimmungen</a> zu</span>
 				<br>
-				<input type="checkbox" id="datenschutz" required> <span style="text-transform: none; font-size: 15px;">Die Daten werden nicht an Dritte weitergegeben</span>
 				<input id="submitbtn" type="submit" form="form1" name="submitbtn" value="Bestellen" onclick="changeID()">
 			</div>
 		</div>
@@ -413,19 +425,38 @@ boxes.push(original); // add first box
  */
 function addOptions() {
 
+	var productToType = create_ProductToType_Array();
+	var uniqueTypes = Array.from(new Set(productTypes))
+
     var select = document.getElementById('products');
-    for (var i = 0; i < products_arr.length; i++) {
+
+    for (var i = 0; i < uniqueTypes.length; i++) {
 		var optGroup = document.createElement('OPTGROUP');
-    	optGroup.label = productTypes[i];
+    	optGroup.label = uniqueTypes[i];
 
-        var option = document.createElement('option');
-        option.text = products_arr[i] + " (" + units[i] + ")";
-        option.value = i; // value is index of product in @products_arr
+    	for (var j = 0; j < products_arr.length; j++) {
+			if(uniqueTypes[i] == productToType[products_arr[j]]) {
+				var option = document.createElement('option');
+				option.text = products_arr[j] + " (" + units[j] + ")";
+				option.value = i; // value is index of product in @products_arr
+				optGroup.appendChild(option);
+			}
+		}
 
-        optGroup.appendChild(option);
-        select.appendChild(optGroup);
+		select.appendChild(optGroup);
     }
 
+}
+
+function create_ProductToType_Array() {
+
+	var productToType = {};
+	for(var i = 0; i < products_arr.length; i++) {
+		productToType[products_arr[i]] = productTypes[i];
+	}
+
+	return productToType;
+	
 }
 
 /*
@@ -452,15 +483,23 @@ function duplicate() {
     // hidden productCounter (for php) gets upated
     document.getElementById("productCounter").value = i + 2;
 
-    // clipboardHeight gets adjusted
-    var clipboardHeight = document.getElementById("clipboard").clientHeight;
-    clipboardHeight += 55;
-    document.getElementById("clipboard").style.height = clipboardHeight + "px";
+	updateClipboardHeight(55);
 
     i++;
 
     // update clipboard with new entry of clone
     update();
+
+}
+
+/*
+ * Adjust clipboard-height
+ */
+function updateClipboardHeight(height) {
+
+    var clipboardHeight = document.getElementById("clipboard").clientHeight;
+    clipboardHeight += height;
+    document.getElementById("clipboard").style.height = clipboardHeight + "px";
 
 }
 
@@ -476,6 +515,7 @@ function remove(obj) {
 	box.parentNode.removeChild(box);
     document.getElementById("productCounter").value = boxes.length;
 
+	updateClipboardHeight(-55);
 	update();
 
 }

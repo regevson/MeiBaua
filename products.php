@@ -14,90 +14,119 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-downloadProducts();
+downloadProducts(1);
+downloadProducts(0);
 
 /*
  * Download product-info (only of available products)
  * and make it globally available
  */
-function downloadProducts() {
+function downloadProducts($avail) {
 
     global $conn;
 
 	$toNames        = array(); // names of products
 	$prices         = array();
+	$type			= array();
 	$unit		    = array();
 	$availability   = array();
 	$info           = array();
    
-    $result = $conn->query("SELECT * FROM products");
+    $result = $conn->query("SELECT * FROM products WHERE available='$avail'");
     
     while ($row = $result->fetch_assoc()) {
         $toNames[] = $row['product'];
         $prices[] = $row['price'];
+        $types[] = $row['type'];
         $unit[] = $row['unit'];
         $availability[] = $row['available'];
         $info[] = $row['info'];
     }
 
-	printProducts($toNames, $prices, $unit, $availability, $info, true);
+	if($avail == 1)
+		printAvailableProducts($toNames, $prices, $types, $unit, $info);
+	else if($avail == 0)
+		printUnavailableProducts($toNames, $prices, $types, $unit, $info);
     
 }
 
+/*
+else 
 
-function printProducts($toNames, $prices, $unit, $availability, $info, $printAvailableProducts) {
-
-	if($printAvailableProducts == true) {
-		echo '<h1 style="text-align: center; margin-top: 30px;">"Da Bauernbua" Produkte</h1>
-		<br>
-		<br>';
-	}
-	
-	else 
-		echo '<h2 style="clear: both;">Noch im Wachstum:</h2>';
-
-	echo '<div class="wrapper" style="padding-left: 30px;">';
-
-	for($p = 0; $p < count($toNames); $p++) {
-
-		$avail = $availability[$p];
-		if(($printAvailableProducts == true && $avail == 0) || $toNames[$p] == -1 || $avail == -1)
-			continue;
-
-		$opacity = 1;
-		$availhtml = '<span id="productH" class="productH" style="font-weight: bold; color: green;">Erhältlich</span>';
-
-		if($printAvailableProducts == false){
+if($printAvailableProducts == false){
 			$opacity = 0.6;
 			$availhtml = '<span id="productH" class="productH" style="font-weight: bold; color: #802400;">Noch im Wachstum</span>';
 		}
+ */
 
+function printAvailableProducts($toNames, $prices, $types, $unit, $info) {
 
+	echo '<h1 style="text-align: center; margin-top: 30px;">"Da Bauernbua" Produkte</h1>
+	<br>
+	<br>';
+	
+	
+	$productToType = create_ProductToType_Array($toNames, $types);
+	$uniqueTypes = array_unique($types);
 
-		echo '<div id="duplicater" class="dup_products items" style="opacity:' . $opacity . '">
-									' . $availhtml . '<br>
+	for($x = 0; $x < sizeof($uniqueTypes); $x++) {
+		echo '<div class="wrapper" style="height: auto; overflow: auto;">';
+		echo '<span class="typesubheading">' . $types[$x] . '</span><br>';
+		for($y = 0; $y < sizeof($toNames); $y++) {
+			if($productToType[$toNames[$y]] == $uniqueTypes[$x]) {
+					echo '<div id="duplicater" class="dup_products items">
+						<span id="productH" class="productH" style="font-weight: bold; color: green;">Erhältlich</span>
 						<div class="productimgdiv">
-							<img id="productimg" class="img-fluid productimg" src="img/' . $toNames[$p] . '.jpg" alt="' . $toNames[$p] . '">
+							<img id="productimg" class="img-fluid productimg" src="img/' . $toNames[$y] . '.jpg" alt="' . $toNames[$y] . '">
 						</div>
-						<span id="products" class="products products_products" name="products">' . $toNames[$p] . '</span>
-						<span id="products" class="products products_products" name="products" style="font-size: 12px;">(' . $unit[$p] . ')</span>
-						<div class="subtotal" align="center" style="margin-top:22px;"> <span id="individualSubtotal">' . $prices[$p] . '</span>
+						<span id="products" class="products products_products" name="products">' . $toNames[$y] . '</span>
+						<span id="products" class="products products_products" name="products" style="font-size: 12px;">(' . $unit[$y] . ')</span>
+						<div class="subtotal" align="center" style="margin-top:22px;"> <span id="individualSubtotal">' . $prices[$y] . '</span>
 							<span>&euro;</span>
 						</div>
-					</div>
-		';
-
-		$toNames[$p] = -1; // to indicate that the product was already printed
-			
-	}
+					</div>';
+			}
+		}
 	echo '</div>';
-
-			
-			if($printAvailableProducts == true)
-				printProducts($toNames, $prices, $unit, $availability, $info, false);
-
+	}
 
 }
+
+function create_ProductToType_Array($toNames, $types) {
+	
+	$productToType = array();
+	for($i = 0; $i < sizeof($toNames); $i++) {
+		$productToType[$toNames[$i]] = $types[$i];
+	}
+
+	return $productToType;	
+
+}
+
+function printUnavailableProducts($toNames, $prices, $types, $unit, $info) {
+
+	echo '<div class="wrapper" style="height: auto; overflow: auto;">';
+	echo '<h2 style="clear: both; text-align: center; font-size: 28px; padding-top: 3rem;">Noch im Wachstum:</h2>';
+
+	for($y = 0; $y < sizeof($toNames); $y++) {
+		echo '<div id="duplicater" class="dup_products items" style="opacity:0.6;">
+			<span id="productH" class="productH" style="font-weight: bold; color: #6c0303;">Noch im Wachstum</span>
+			<div class="productimgdiv">
+				<img id="productimg" class="img-fluid productimg" src="img/' . $toNames[$y] . '.jpg" alt="' . $toNames[$y] . '">
+			</div>
+			<span id="products" class="products products_products" name="products">' . $toNames[$y] . '</span>
+			<span id="products" class="products products_products" name="products" style="font-size: 12px;">(' . $unit[$y] . ')</span>
+			<div class="subtotal" align="center" style="margin-top:22px;"> <span id="individualSubtotal">' . $prices[$y] . '</span>
+				<span>&euro;</span>
+			</div>
+		</div>';
+	}
+
+	echo '</div>';
+
+}
+
+
 
 ?>
 <!DOCTYPE html>
