@@ -438,7 +438,7 @@ function addOptions() {
 			if(uniqueTypes[i] == productToType[products_arr[j]]) {
 				var option = document.createElement('option');
 				option.text = products_arr[j] + " (" + units[j] + ")";
-				option.value = i; // value is index of product in @products_arr
+				option.value = j; // value is index of product in @products_arr
 				optGroup.appendChild(option);
 			}
 		}

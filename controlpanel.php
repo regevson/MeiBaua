@@ -53,19 +53,19 @@ if($conn->connect_error) {
 
 		<label>Einheit:</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="type" name="type" value="Gramm" required onchange="update()">
+		<input class="personalInfoInput" type="text" id="type" name="unit" value="Gramm" required>
 		<br>
 		<br>
 
 		<label>Produktart:</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="type" name="type" value="Obst" required onchange="update()">
+		<input class="personalInfoInput" type="text" id="type" name="type" value="Obst" required>
 		<br>
 		<br>
 
 		<label>Verfuegbar ja/nein:</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="type" name="available" value="ja" required onchange="update()">
+		<input class="personalInfoInput" type="text" id="type" name="available" value="1" placeholder="1, 0, oder -1" required>
 		<br>
 		<br>
 
@@ -128,10 +128,14 @@ function addProduct() {
 function changeProduct() {
 
 	$product = $_POST["product"];
+	$price = $_POST["price"];
+	$type = $_POST["type"];
+	$unit = $_POST["unit"];
 	$available = $_POST["available"];
 	$info = $_POST["info"];
-
-	$sql = "UPDATE `products` SET `available` = '" . $available . "', `info` = '" . $info. "' WHERE `product` = '" . $product . "'";
+	
+	$sql = "UPDATE `products` SET `price` = '$price', `type` = '$type', `unit` = '$unit', `available` = '$available', 
+		`info` = '$info' WHERE `product` = '" . $product . "'";
 
     return executeQuery($sql);
 

@@ -35,7 +35,7 @@ function downloadProducts() {
 	global $quantityByName;
 
 	global $conn;
-	$result = $conn->query("SELECT * FROM products WHERE available=1");
+	$result = $conn->query("SELECT * FROM products");
 
 	while($row = $result->fetch_assoc()) {
 			$productName = $row['product'];
@@ -177,7 +177,11 @@ function displayData($customerData, $orderData) {
 						$output = $output . "<li>" . $quantity . "x " . $product . "</li>";
 				}
 
-				$output = $output . "</ul></div>";
+				$output = $output . "</ul></div>
+
+				<div class='labeldiv'><span class='labels'>Betrag:</span></div>
+				<span class='content'><b>" . $total_arr[$row] . '</b></span>';
+
 						
 				$output = $output . "<div style='clear: both; text-align: center;'>";
 				if(strcmp($paid_arr[$row], "bezahlt") == true) 
@@ -350,19 +354,20 @@ function collectOrderData($orderID_arr) {
 		for($i = 0; $i < count($orderID_arr); $i++) {
 				$orderID = $orderID_arr[$i];
 
-				$row = getDataFromDB("orders", "orderID", $orderID);
+				$result = getDataFromDB("orders", "orderID", $orderID);
+  				if($row = $result->fetch_assoc()) {
+					//fill up $quantityByName-array with ordered items and quantity
+					for($x = 0; $x < count($quantityByName); $x++) {
+							$product = $toNames[$x];
+							$quantity = $row[$product];
+							$quantityByName[$product] = $quantity;
+					}
 
-				//fill up $quantityByName-array with ordered items and quantity
-				for($x = 0; $x < count($quantityByName); $x++) {
-						$product = $toNames[$x];
-						$quantity = $row[$product];
-						$quantityByName[$product] = $quantity;
+					$quantityByName_arr[$i] = $quantityByName;
+					$delivery_arr[$i] = $row['delivery'];
+					$total_arr[$i] = $row['total'];
+					$done_arr[$i] = $row['done'];
 				}
-
-				$quantityByName_arr[$i] = $quantityByName;
-				$delivery_arr[$i] = $row['delivery'];
-				$total_arr[$i] = $row['total'];
-				$done_arr[$i] = $row['done'];
 
 		}
 
@@ -379,11 +384,7 @@ function getDataFromDB($table, $where, $condition) {
 
   $sql = "SELECT * FROM $table WHERE $where='$condition'";
   $result = $conn->query($sql);
-
-  if($row = $result->fetch_assoc())
-     return $row;
-
-  return -1;
+  return $result;
 
 }
 

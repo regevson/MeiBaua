@@ -27,7 +27,7 @@ function downloadProducts($avail) {
 
 	$toNames        = array(); // names of products
 	$prices         = array();
-	$type			= array();
+	$types			= array();
 	$unit		    = array();
 	$availability   = array();
 	$info           = array();
