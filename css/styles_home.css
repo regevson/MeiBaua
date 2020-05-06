@@ -10097,8 +10097,9 @@ h3 {
   font-size: 1.25rem;
 }
 .masthead .masthead-avatar {
-	width: 8rem;
+	width: 10rem;
 	margin-top: 30px;
+	margin-left: 18px;
 }
 
 .gruss {
