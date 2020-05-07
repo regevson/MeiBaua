@@ -381,7 +381,9 @@ function emailWorkers($total)
 				</div>
 				<select id="products" class="products custom-select" name="products" onchange="update()">
 				</select>
-				<input type="number" id="number" class="number" name="number" value="0" min="0" onchange="update()">
+				<input type="number" id="number" class="number" name="number" value="0" min="0" onchange="update()" onkeypress="update(); return (event.keyCode!=13);">
+				<p class="unit">Kopf</p>
+				<div style="clear: both;"></div>
 				<div class="subtotal" align="center"> <span class="individualSubtotal">0</span><span> &euro;</span>
 				</div>
 					<div id="addProductDiv">
@@ -437,7 +439,7 @@ function addOptions() {
     	for (var j = 0; j < products_arr.length; j++) {
 			if(uniqueTypes[i] == productToType[products_arr[j]]) {
 				var option = document.createElement('option');
-				option.text = products_arr[j] + " (" + units[j] + ")";
+				option.text = products_arr[j];
 				option.value = j; // value is index of product in @products_arr
 				optGroup.appendChild(option);
 			}
@@ -539,13 +541,17 @@ function update(radiobtn) {
 		var productimg = box.getElementsByClassName("productimg")[0];
 		var products = box.getElementsByClassName("products")[0];
 		var number = box.getElementsByClassName("number")[0];
+		var unitp = box.getElementsByClassName("unit")[0];
 		var indivSubtotal = box.getElementsByClassName("individualSubtotal")[0];
 
-        productH.innerHTML = "Produkt " + (i+1); // value of selected product
+        productH.innerHTML = "Produkt " + (i+1); // update product-headings
         var selectedProductVal = products.value; // value of selected product
         var productPrice = productPrices[selectedProductVal];
         var quantity = number.value;
 		
+		var unit = units[selectedProductVal]; // get unit
+		unitp.innerHTML = unit; // update unit
+
         var subtotal = productPrice * quantity;
         indivSubtotal.innerHTML = financial(subtotal);
 
@@ -559,7 +565,7 @@ function update(radiobtn) {
 
         // update clipboard content
         clipboard = clipboard + quantity + "x " + products.options[products.selectedIndex].text +
-            '<br><i>\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0' + financial(subtotal) + " &euro;</i><br>";
+            ' (' + unit + ')' + '<br><i>\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0' + financial(subtotal) + " &euro;</i><br>";
 	}
 
     // calc deliveryCost
@@ -653,6 +659,22 @@ function changeDelivery(radiobtn, clipboard, deliveryCost) {
 
 }
 
+function stopSubmitOnEnter (e) {
+  var eve = e || window.event;
+  var keycode = eve.keyCode || eve.which || eve.charCode;
+
+  if (keycode == 13) {
+    eve.cancelBubble = true;
+    eve.returnValue = false;
+
+    if (eve.stopPropagation) {   
+      eve.stopPropagation();
+      eve.preventDefault();
+    }
+
+    return false;
+  }
+}
 
 window.onload = update();
 
