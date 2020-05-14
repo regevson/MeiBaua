@@ -14,13 +14,25 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$toNames        = array(); // names of products
-$prices         = array();
-$types			= array();
-$units		    = array();
-$quantityByName = array(); // input is productName - output is orderedQuantity of product
+$products = array(); // product objects
 $deliveryCost   = 1.5;
 $minTotal = 7;
+
+class Product {
+
+	public $pname;
+	public $pprice;
+	public $ptype;
+	public $punit;
+	public $pquantity;
+
+}
+
+// arrays get passed to JS
+$pNames = array();
+$pPrices = array();
+$pTypes = array();
+$pUnits = array();
 
 downloadProducts();
 
@@ -31,34 +43,45 @@ downloadProducts();
 function downloadProducts()
 {
     
+    global $products;
     // this info gets passed to JavaScript
-    global $toNames;
-    global $prices;
-    global $types;
-    global $units;
-    global $quantityByName;
-    
+	global $pNames;
+	global $pPrices;
+	global $pTypes;
+	global $pUnits;
+
     global $conn;
     $result = $conn->query("SELECT * FROM products WHERE available=1");
     
     while ($row = $result->fetch_assoc()) {
-        $productName  = $row['product'];
-        $productPrice = $row['price'];
-        $productType  = $row['type'];
-        $productUnit  = $row['unit'];
-        
-        $toNames[]                    = $productName;
-        $prices[]                     = $productPrice;
-        $types[]                     = $productType;
-        $units[]                     = $productUnit;
-        $quantityByName[$productName] = 0; // as customer hasn't entered quantity yet
-    }
+		$product = new Product();
+		$product->pname = $row['product'];
+		$product->pprice = $row['price'];
+		$product->ptype = $row['type'];
+		$product->punit = $row['unit'];
+		$product->pquantity= 0;
+		$products[$product->pname] = $product;
+
+		$pNames[] = $product->pname;
+		$pPrices[] = $product->pprice;
+		$pTypes[] = $product->ptype;
+		$pUnits[] = $product->punit;
+	}
     
 }
 
+
+
 // listen for customer click on "Bestellen"-button
-if (isset($_POST['submitbtn']))
-    collectData();
+if (isset($_POST['submitbtn'])) {
+	if (isset($_POST['importantInfoCB']) == false)
+		echo "<script> alert('Bitte haken Sie das Kästchen ganz oben links an!');
+					   document.body.scrollTop = 0;
+					   document.documentElement.scrollTop = 0;
+			  </script>";
+	else
+    	collectData();
+}
 
 /*
  * Retrieve data from the form-fields
@@ -67,8 +90,7 @@ if (isset($_POST['submitbtn']))
 function collectData()
 {
     
-    global $toNames;
-    global $quantityByName;
+    global $products;
     global $deliveryCost;
     
     $numProducts = $_POST['productCounter']; // counts number of products that were ordered
@@ -83,18 +105,17 @@ function collectData()
 	$date		 = date("l j\. F Y");
     
     for ($x = 0; $x < $numProducts; $x++) {
-        $product = "products" . $x;
         
         /*
          * JS gave the options in select a value according to their index in @toNames
          * $_POST[$product] returns the value of the selected element
          */
-        $selectedProductNum  = $_POST[$product]; // index into @toNames
-        $selectedProductName = $toNames[$selectedProductNum];
+        $productID = "products" . $x;
+        $selectedProductName  = $_POST[$productID]; // index into @toNames
+		$product = $products[$selectedProductName];
         $productQuantity     = "number" . $x;
-        $quantity            = $_POST[$productQuantity];
-        $quantityByName[$selectedProductName] += $quantity;
-        $total += calcSubtotal($selectedProductNum, $quantity);
+		$product->pquantity += $_POST[$productQuantity];
+        $total += calcSubtotal($product);
     }
 
 	global $minTotal;
@@ -112,25 +133,20 @@ function collectData()
      */
     $delivery = "letdeliver"; // current policy (delivery mandatory)
     $total += $deliveryCost; // is fetched from global var declared at top
-    $orderID    = uploadOrderData($quantityByName, $toNames, $delivery, $total);
+    $orderID    = uploadOrderData($products, $delivery, $total);
     $customerID = uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $date, $orderID);
     
     if ($orderID != -1 && $customerID != -1) {
-        emailCustomer($orderID, $customerID, $email, $toNames, $quantityByName, $total);
+        emailCustomer($orderID, $customerID, $email, $products, $total);
         //emailWorkers($total);
         //header("Location: http://meibaua.ml/confirmation.html");
     }
     
 }
 
-function calcSubtotal($selectedProductNum, $quantity)
-{
+function calcSubtotal($product) {
     
-    global $prices;
-    
-    $productPrice = $prices[$selectedProductNum];
-    $subtotal     = $productPrice * $quantity;
-    return $subtotal;
+    return $product->pprice * $product->pquantity;
     
 }
 
@@ -164,21 +180,17 @@ function evalPLZ($plz)
 /*
  * Upload the entered data regarding the purchase
  */
-function uploadOrderData($quantityByName, $toNames, $delivery, $total)
+function uploadOrderData($products, $delivery, $total)
 {
     
     $sql = "INSERT INTO orders (";
-    for ($x = 0; $x < count($quantityByName); $x++) {
-        $product = $toNames[$x];
-        $sql     = $sql . $product . ", ";
-    }
+	foreach($products as $productName => $product)
+        $sql     = $sql . $productName . ", ";
     
     $sql = $sql . "delivery, total) VALUES (";
     
-    for ($x = 0; $x < count($quantityByName); $x++) {
-        $product = $toNames[$x];
-        $sql     = $sql . "'" . $quantityByName[$product] . "', ";
-    }
+	foreach($products as $productName => $product)
+        $sql     = $sql . "'" . $product->pquantity . "', ";
     
     $sql = $sql . "'" . $delivery . "', '" . $total . "')";
     
@@ -223,7 +235,7 @@ function executeQuery($sql)
     
 }
 
-function emailCustomer($orderID, $customerID, $email, $toNames, $quantityByName, $total)
+function emailCustomer($orderID, $customerID, $email, $products, $total)
 {
     
 	$deliveryText = "\nDie Produkte werden am Samstag in einer Woche geliefert!";
@@ -255,12 +267,11 @@ Nachfolgend siehst du deinen Einkauf\n
     $message = $message . "Lieferart: Lieferung mit Liefergebühr (1,50€/Münster)\n";
     $message = $message . "Bestellte Ware:\n\n";
     
-    for ($x = 0; $x < count($quantityByName); $x++) {
-        $product  = $toNames[$x];
-        $quantity = $quantityByName[$product];
+	foreach($products as $productName => $product) {
+        $quantity = $product->pname;
         if ($quantity == 0)
             continue;
-        $message = $message . $quantity . "x " . $product . "\n";
+        $message = $message . $quantity . "x " . $productName . "\n";
     }
     
 	$message = $message . $deliveryText;
@@ -316,7 +327,7 @@ function emailWorkers($total)
 	<br>
 		<div class="banner">
 
-			<input form="form1" type="checkbox" id="delivery" required> <span style="text-transform: none; font-size: 15px;">
+			<input form="form1" type="checkbox" id="delivery" name="importantInfoCB" autofocus> <span style="text-transform: none; font-size: 15px;">
 				Ich habe verstanden, dass ich bis Mittwoch um 23:59 bestellen und bezahlen muss, damit ich die Lieferung am darauffolgenden Samstag bekomme.
 				<br>Wird später bezahlt, bekomme ich die Produkte am Samstag eine Woche später.<br><br>
 				<b>Empfänger:</b> Da Bauernbua<br>
@@ -387,8 +398,8 @@ function emailWorkers($total)
 				<div class="subtotal" align="center"> <span class="individualSubtotal">0</span><span> &euro;</span>
 				</div>
 					<div id="addProductDiv">
-						<button class="addbtn morebtn" type="button" onclick="duplicate()">Produkt hinzufügen</button>
-						<button class="removebtn morebtn" style="display: none;" type="button" onclick="remove(this)">Produkt entfernen</button>
+						<button class="addbtn morebtn" style="background: #0080001f;" type="button" onclick="duplicate()">Produkt hinzufügen</button>
+						<button class="removebtn morebtn" style="display: none; background: #ff000038;" type="button" onclick="remove(this)">Produkt entfernen</button>
 					</div>
 				</div>
 			</div>
@@ -405,30 +416,52 @@ function emailWorkers($total)
 		</div>
 	</form>
 
-
+	
 <script>
+// arrays get combined to structs "product"
+var pNames = <?php echo json_encode($pNames); ?> ; // stores names of products
+var pPrices = <?php echo json_encode($pPrices); ?> ; // stores prices of products
+var pTypes = <?php echo json_encode($pTypes); ?> ; // stores prices of products
+var pUnits = <?php echo json_encode($pUnits); ?> ; // stores prices of products
 
-var products_arr = <?php echo json_encode($toNames); ?> ; // stores names of products
-var productPrices = <?php echo json_encode($prices); ?> ; // stores prices of products
-var productTypes = <?php echo json_encode($types); ?> ; // stores prices of products
-var units = <?php echo json_encode($units); ?> ; // stores prices of products
+var products = createStructs();
 
 var i = 0; // counts number of added products
 var boxes = []; // all boxes are stored in here
 
 var original = document.getElementById('duplicater'); 
-addOptions();
+addOptions(products);
 var originalClone = original.cloneNode(true); // keep this as template for new boxes to clone from
 boxes.push(original); // add first box
 
+/*
+ * Combine arrays received from PHP at same index
+ * to form "product"-struct
+ */
+function createStructs() {
+
+	function Product(name, price, type, unit) {
+		this.name = name;
+		this.price = price;
+		this.type = type;
+		this.unit = unit;
+	}
+
+	var products = [];
+	for(var i = 0; i < pNames.length; i++) {
+		products[i] = new Product(pNames[i], pPrices[i], pTypes[i], pUnits[i]);
+	}
+
+	return products;
+
+}
 
 /* 
  * Add options (products) to option-dropdown
  */
-function addOptions() {
+function addOptions(products) {
 
-	var productToType = create_ProductToType_Array();
-	var uniqueTypes = Array.from(new Set(productTypes))
+	var uniqueTypes = Array.from(new Set(pTypes))
 
     var select = document.getElementById('products');
 
@@ -436,11 +469,12 @@ function addOptions() {
 		var optGroup = document.createElement('OPTGROUP');
     	optGroup.label = uniqueTypes[i];
 
-    	for (var j = 0; j < products_arr.length; j++) {
-			if(uniqueTypes[i] == productToType[products_arr[j]]) {
+    	for (var j = 0; j < products.length; j++) {
+			var product = products[j];
+			if(uniqueTypes[i] == product.type) {
 				var option = document.createElement('option');
-				option.text = products_arr[j];
-				option.value = j; // value is index of product in @products_arr
+				option.text = product.name;
+				option.value = product.name;
 				optGroup.appendChild(option);
 			}
 		}
@@ -450,16 +484,7 @@ function addOptions() {
 
 }
 
-function create_ProductToType_Array() {
 
-	var productToType = {};
-	for(var i = 0; i < products_arr.length; i++) {
-		productToType[products_arr[i]] = productTypes[i];
-	}
-
-	return productToType;
-	
-}
 
 /*
  * Add new product-box as user requested
@@ -473,10 +498,14 @@ function duplicate() {
 
     // remove old add-button
 	var oldAddBtn = oldBox.getElementsByClassName("addbtn")[0];
-    oldAddBtn.outerHTML = ""; // only most recent product-"box" can add products
+    oldAddBtn.style.display = "none"; // only most recent product-"box" can add products
 	// display remove-button
 	var removeBtn = oldBox.getElementsByClassName("removebtn")[0];
     removeBtn.style.display = "inline"; // make button that removes box visible on old box
+
+	// display new removebtn on added box
+	var newRemoveBtn = clone.getElementsByClassName("removebtn")[0];
+	newRemoveBtn.style.display = "inline";
 
     // Heaading: "Producti", of new div gets updated
 	var productH = clone.getElementsByClassName("productH")[0];
@@ -485,7 +514,7 @@ function duplicate() {
     // hidden productCounter (for php) gets upated
     document.getElementById("productCounter").value = i + 2;
 
-	updateClipboardHeight(55);
+		updateClipboardHeight(55);
 
     i++;
 
@@ -511,16 +540,27 @@ function updateClipboardHeight(height) {
 function remove(obj) { 
 
 	var box = obj.parentElement.parentElement;
-
 	var boxIndex = boxes.indexOf(box);
 	boxes.splice(boxIndex, 1);
 	box.parentNode.removeChild(box);
     document.getElementById("productCounter").value = boxes.length;
 
 	updateClipboardHeight(-55);
+	updateBtns();
 	update();
 
 }
+
+function updateBtns() {
+
+	lastBox = boxes[boxes.length - 1];
+	lastBox.getElementsByClassName("addbtn")[0].style.display = "inline";
+	if(boxes.length == 1)
+		lastBox.getElementsByClassName("removebtn")[0].style.display = "none";
+
+}
+
+
 
 /*
  * Gets called when product, quantity or plz gets changed
@@ -539,23 +579,24 @@ function update(radiobtn) {
 		updateID(box, i); // so PHP can talk to individual objects
 		var productH = box.getElementsByClassName("productH")[0];
 		var productimg = box.getElementsByClassName("productimg")[0];
-		var products = box.getElementsByClassName("products")[0];
+		var selectedProduct = box.getElementsByClassName("products")[0];
 		var number = box.getElementsByClassName("number")[0];
 		var unitp = box.getElementsByClassName("unit")[0];
 		var indivSubtotal = box.getElementsByClassName("individualSubtotal")[0];
 
         productH.innerHTML = "Produkt " + (i+1); // update product-headings
-        var selectedProductVal = products.value; // value of selected product
-        var productPrice = productPrices[selectedProductVal];
+        var selectedProductName = selectedProduct.value; // value of selected product (its name)
+		var selectedProductIndex = pNames.indexOf(selectedProductName);
+        var productPrice = products[selectedProductIndex].price;
         var quantity = number.value;
 		
-		var unit = units[selectedProductVal]; // get unit
+		var unit = products[selectedProductIndex].unit; // get unit
 		unitp.innerHTML = unit; // update unit
 
         var subtotal = productPrice * quantity;
         indivSubtotal.innerHTML = financial(subtotal);
 
-        updateImages(productimg, selectedProductVal);
+        updateImages(productimg, selectedProductIndex);
 
 		if(quantity == 0)
 			continue;
@@ -564,7 +605,7 @@ function update(radiobtn) {
 
 
         // update clipboard content
-        clipboard = clipboard + quantity + "x " + products.options[products.selectedIndex].text +
+        clipboard = clipboard + quantity + "x " + selectedProduct.options[selectedProduct.selectedIndex].text +
             ' (' + unit + ')' + '<br><i>\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0' + financial(subtotal) + " &euro;</i><br>";
 	}
 
@@ -609,7 +650,7 @@ function financial(x) {
  */
 function updateImages(productimg, imgIndex) {
 
-    var imgName = products_arr[imgIndex];
+    var imgName = products[imgIndex].name;
     productimg.src = "img/" + imgName + ".jpg";
 
 }

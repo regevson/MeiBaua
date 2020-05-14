@@ -34,7 +34,8 @@ function downloadProducts($avail) {
     
     while ($row = $result->fetch_assoc()) {
         $toNames[] = $row['product'];
-        $prices[] = $row['price'];
+        $price = $row['price'];
+        $prices[] = sprintf('%0.2f', $price);
         $types[] = $row['type'];
         $unit[] = $row['unit'];
         $availability[] = $row['available'];
