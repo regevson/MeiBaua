@@ -196,6 +196,7 @@ function uploadOrderData($products, $delivery, $total)
     
     //echo"<br> $sql <br>";
     //echo $total;
+	echo $sql . "<br><br>";
     $orderID = executeQuery($sql); // get orderID-field of newly inserted row
     return $orderID;
     
@@ -271,7 +272,7 @@ Nachfolgend siehst du deinen Einkauf\n
         $quantity = $product->pname;
         if ($quantity == 0)
             continue;
-        $message = $message . $quantity . "x " . $productName . "\n";
+        $message = $message . $quantity . "x " . umlauts($productName) . "\n";
     }
     
 	$message = $message . $deliveryText;
@@ -308,6 +309,19 @@ function emailWorkers($total)
     
 }
 
+function umlauts($string) {
+ $string = str_replace("_", " ", $string);
+ $string = str_replace("ae", "ä", $string);
+ $string = str_replace("ü", "ue", $string);
+ $string = str_replace("ö", "oe", $string);
+ $string = str_replace("Ä", "Ae", $string);
+ $string = str_replace("Ü", "Ue", $string);
+ $string = str_replace("Ö", "Oe", $string);
+ $string = str_replace("ß", "ss", $string);
+ $string = str_replace("´", "", $string);
+ return $string;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -332,7 +346,7 @@ function emailWorkers($total)
 				<br>Wird später bezahlt, bekomme ich die Produkte am Samstag eine Woche später.<br><br>
 				<b>Empfänger:</b> Da Bauernbua<br>
 				<b>IBAN:</b> AT062050800001507003<br>
-				<b>Verwendungszweck:</b> Bestellnummer (wird per Mail zugestellt) und Vorname/Nachname
+				<b>Verwendungszweck:</b> Kundennummer (wird per Mail zugestellt) und Vorname/Nachname
 			</span>
 		</div>
 	<br>
@@ -386,9 +400,8 @@ function emailWorkers($total)
 		</div>
 		<div class="middle">
 			<div id="duplicater" class="items" style="margin-bottom: 30px;"> <span id="productH" class="productH">Produkt 1</span>
-				<br>
 				<div class="productimgdiv">
-					<img id="productimg" class="img-fluid productimg" src="img/karotten.jpg" alt="Colorlib Template">
+					<img id="productimg" class="img-fluid productimg" src="img/.jpg" alt="Colorlib Template">
 				</div>
 				<select id="products" class="products custom-select" name="products" onchange="update()">
 				</select>
@@ -418,6 +431,7 @@ function emailWorkers($total)
 
 	
 <script>
+
 // arrays get combined to structs "product"
 var pNames = <?php echo json_encode($pNames); ?> ; // stores names of products
 var pPrices = <?php echo json_encode($pPrices); ?> ; // stores prices of products
@@ -473,7 +487,7 @@ function addOptions(products) {
 			var product = products[j];
 			if(uniqueTypes[i] == product.type) {
 				var option = document.createElement('option');
-				option.text = product.name;
+				option.text = umlauts(insertSpaces(product.name));
 				option.value = product.name;
 				optGroup.appendChild(option);
 			}
@@ -514,23 +528,10 @@ function duplicate() {
     // hidden productCounter (for php) gets upated
     document.getElementById("productCounter").value = i + 2;
 
-		updateClipboardHeight(55);
-
     i++;
 
     // update clipboard with new entry of clone
     update();
-
-}
-
-/*
- * Adjust clipboard-height
- */
-function updateClipboardHeight(height) {
-
-    var clipboardHeight = document.getElementById("clipboard").clientHeight;
-    clipboardHeight += height;
-    document.getElementById("clipboard").style.height = clipboardHeight + "px";
 
 }
 
@@ -545,7 +546,6 @@ function remove(obj) {
 	box.parentNode.removeChild(box);
     document.getElementById("productCounter").value = boxes.length;
 
-	updateClipboardHeight(-55);
 	updateBtns();
 	update();
 
@@ -651,7 +651,7 @@ function financial(x) {
 function updateImages(productimg, imgIndex) {
 
     var imgName = products[imgIndex].name;
-    productimg.src = "img/" + imgName + ".jpg";
+    productimg.src = "img/" + imgName + ".jpeg";
 
 }
 
@@ -715,6 +715,20 @@ function stopSubmitOnEnter (e) {
 
     return false;
   }
+}
+
+function umlauts(str) {
+	str = str.split("ue").join("ü");
+	str = str.split("Ue").join("Ü");
+	str = str.split("ae").join("ä");
+	str = str.split("Ae").join("Ä");
+	str = str.split("oe").join("ö");
+	str = str.split("Oe").join("Ö");
+	return str;
+}
+
+function insertSpaces(str) {
+	return str.split("_").join(" ");
 }
 
 window.onload = update();

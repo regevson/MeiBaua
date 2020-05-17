@@ -14,38 +14,45 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+class Product {
+
+	public $pname;
+	public $pprice;
+	public $ptype;
+	public $punit;
+	public $pquantity;
+
+}
 
 /*
  * Download product-info (only of available products)
  * and make it globally available
  */
-function downloadProducts($avail) {
+function downloadProducts($avail)
+{
+    
+	$products = array(); // product objects
+	$types = array(); // necessary for product categorizing
 
     global $conn;
-
-	$toNames        = array(); // names of products
-	$prices         = array();
-	$types			= array();
-	$unit		    = array();
-	$availability   = array();
-	$info           = array();
-   
     $result = $conn->query("SELECT * FROM products WHERE available='$avail'");
-    
-    while ($row = $result->fetch_assoc()) {
-        $toNames[] = $row['product'];
-        $price = $row['price'];
-        $prices[] = sprintf('%0.2f', $price);
-        $types[] = $row['type'];
-        $unit[] = $row['unit'];
-        $availability[] = $row['available'];
-        $info[] = $row['info'];
-    }
 
+    while ($row = $result->fetch_assoc()) {
+		$product = new Product();
+		$product->pname = $row['product'];
+		$product->pprice = $row['price'];
+		$product->ptype = $row['type'];
+		$product->punit = $row['unit'];
+		$product->pquantity= 0;
+		$products[$product->pname] = $product;
+		$types[] = $product->ptype;
+	}
+    
 	if($avail == 1)
-		printAvailableProducts($toNames, $prices, $types, $unit, $info);
+		printAvailableProducts($products, $types);
 	else if($avail == 0)
-		printUnavailableProducts($toNames, $prices, $types, $unit, $info);
+		printUnavailableProducts($products);
+		echo "";
     
 }
 
@@ -58,26 +65,23 @@ if($printAvailableProducts == false){
 		}
  */
 
-function printAvailableProducts($toNames, $prices, $types, $unit, $info) {
+function printAvailableProducts($products, $types) {
 
-		
-	
-	$productToType = create_ProductToType_Array($toNames, $types);
-	$uniqueTypes = array_unique($types);
+	$uniqueTypes = array_values(array_unique($types));
 
 	for($x = 0; $x < sizeof($uniqueTypes); $x++) {
 		echo '<div class="wrapper" style="height: auto; overflow: auto;">';
-		echo '<span class="typesubheading">' . $types[$x] . '</span><br>';
-		for($y = 0; $y < sizeof($toNames); $y++) {
-			if($productToType[$toNames[$y]] == $uniqueTypes[$x]) {
+		echo '<span class="typesubheading">' . $uniqueTypes[$x] . '</span><br>';
+		foreach($products as $productName => $product) {
+			if($product->ptype == $uniqueTypes[$x]) {
 					echo '<div id="duplicater" class="dup_products items">
 						<span id="productH" class="productH" style="font-weight: bold; color: green;">Erhältlich</span>
 						<div class="productimgdiv">
-							<img id="productimg" class="img-fluid productimg" src="img/' . $toNames[$y] . '.jpg" alt="' . $toNames[$y] . '">
+							<img id="productimg" class="img-fluid productimg" src="img/' . $productName . '.jpeg" alt="' . $productName . '">
 						</div>
-						<span id="products" class="products products_products" name="products">' . $toNames[$y] . '</span>
-						<span id="products" class="products products_products" name="products" style="font-size: 12px;">(' . $unit[$y] . ')</span>
-						<div class="subtotal" align="center" style="margin-top:22px;"> <span id="individualSubtotal">' . $prices[$y] . '</span>
+						<span id="products" class="products products_products" name="products">' . umlauts($productName) . '</span>
+						<span id="products" class="products products_products" name="products" style="font-size: 12px;">(' . $product->punit . ')</span>
+						<div class="subtotal" align="center" style="margin-top:22px;"> <span id="individualSubtotal">' . $product->pprice . '</span>
 							<span>&euro;</span>
 						</div>
 					</div>';
@@ -88,31 +92,21 @@ function printAvailableProducts($toNames, $prices, $types, $unit, $info) {
 
 }
 
-function create_ProductToType_Array($toNames, $types) {
-	
-	$productToType = array();
-	for($i = 0; $i < sizeof($toNames); $i++) {
-		$productToType[$toNames[$i]] = $types[$i];
-	}
 
-	return $productToType;	
-
-}
-
-function printUnavailableProducts($toNames, $prices, $types, $unit, $info) {
+function printUnavailableProducts($products) {
 
 	echo '<div class="wrapper" style="height: auto; overflow: auto;">';
 	echo '<h2 style="clear: both; text-align: center; font-size: 28px; padding-top: 3rem;">Noch im Wachstum:</h2>';
 
-	for($y = 0; $y < sizeof($toNames); $y++) {
+	foreach($products as $productName => $product) {
 		echo '<div id="duplicater" class="dup_products items" style="opacity:0.6;">
 			<span id="productH" class="productH" style="font-weight: bold; color: #6c0303;">Noch im Wachstum</span>
 			<div class="productimgdiv">
-				<img id="productimg" class="img-fluid productimg" src="img/' . $toNames[$y] . '.jpg" alt="' . $toNames[$y] . '">
+				<img id="productimg" class="img-fluid productimg" src="img/' . $productName . '.jpeg" alt="' . $productName . '">
 			</div>
-			<span id="products" class="products products_products" name="products">' . $toNames[$y] . '</span>
-			<span id="products" class="products products_products" name="products" style="font-size: 12px;">(' . $unit[$y] . ')</span>
-			<div class="subtotal" align="center" style="margin-top:22px;"> <span id="individualSubtotal">' . $prices[$y] . '</span>
+			<span id="products" class="products products_products" name="products">' . umlauts($productName) . '</span>
+			<span id="products" class="products products_products" name="products" style="font-size: 12px;">(' . $product->punit . ')</span>
+			<div class="subtotal" align="center" style="margin-top:22px;"> <span id="individualSubtotal">' . $product->pprice . '</span>
 				<span>&euro;</span>
 			</div>
 		</div>';
@@ -122,6 +116,19 @@ function printUnavailableProducts($toNames, $prices, $types, $unit, $info) {
 
 }
 
+
+function umlauts($string) {
+ $string = str_replace("_", " ", $string);
+ $string = str_replace("ae", "ä", $string);
+ $string = str_replace("ue", "ü", $string);
+ $string = str_replace("oe", "ö", $string);
+ $string = str_replace("Ae", "Ä", $string);
+ $string = str_replace("Ue", "Ü", $string);
+ $string = str_replace("Oe", "Ö", $string);
+ $string = str_replace("ss", "ß", $string);
+ $string = str_replace("´", "", $string);
+ return $string;
+}
 
 
 ?>

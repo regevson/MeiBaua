@@ -24,7 +24,7 @@ if($conn->connect_error) {
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>MeiBaua - Bestellungen</title>
+        <title>MeiBaua - ControlPanel</title>
         <link rel="stylesheet" type="text/css" href="css/styles.css">
  <link rel = "stylesheet"
          href = "https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
@@ -41,25 +41,25 @@ if($conn->connect_error) {
 	<div id="personal" class="personalInfo" style="margin: 0 auto; height: 650px;">
 		<label>Produktname</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="product" name="product" value="Pappenheimersalat" required>
+		<input class="personalInfoInput" type="text" id="product" name="product" placeholder="Gruener_Salat" required>
 		<br>
 		<br>
 
 		<label>Preis:</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="price" name="price" value="4" required>
+		<input class="personalInfoInput" type="text" id="price" name="price" placeholder="4.50" required>
 		<br>
 		<br>
 
 		<label>Einheit:</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="type" name="unit" value="Gramm" required>
+		<input class="personalInfoInput" type="text" id="type" name="unit" placeholder="Gramm" required>
 		<br>
 		<br>
 
 		<label>Produktart:</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="type" name="type" value="Obst" required>
+		<input class="personalInfoInput" type="text" id="type" name="type" placeholder="Obst" required>
 		<br>
 		<br>
 
@@ -71,7 +71,7 @@ if($conn->connect_error) {
 
 		<label>Infotext:</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="type" name="info" value="info">
+		<input class="personalInfoInput" type="text" id="type" name="info" placeholder="currently not used">
 		<br>
 		<br>
 
@@ -165,9 +165,9 @@ function addColumn($name) {
 	global $conn;
 	$sql = "ALTER TABLE `orders` ADD `" . $name . "` INT NOT NULL DEFAULT '0' AFTER `" . $lastAddedProduct . "`";
 	 if ($conn->query($sql) === TRUE) {
-            echo "Record deleted successfully";
+            echo "Column added successfully";
         } else {
-            echo "Error deleting record: " . $conn->error;
+            echo "Error adding column: " . $conn->error;
         }
 
 
@@ -183,19 +183,10 @@ function getLastAddedProduct() {
 
   if($row = $result->fetch_assoc())
      return $row['product'];
-
-  return -1;
-
+  else
+	  return 'orderID'; // if no product is in products-table, then add new product (in orders-table) after "orderID"-column!
 
 }
-
-
-
-
-
-
-
-
 
 ?>
 
