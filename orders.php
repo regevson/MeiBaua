@@ -16,7 +16,6 @@ if ($conn->connect_error) {
 
 $products = array(); // product objects
 $deliveryCost   = 1.5;
-$minTotal = 7;
 
 class Product {
 
@@ -78,15 +77,8 @@ function downloadProducts()
 
 
 // listen for customer click on "Bestellen"-button
-if (isset($_POST['submitbtn'])) {
-	if (isset($_POST['importantInfoCB']) == false)
-		echo "<script> alert('Bitte haken Sie das Kästchen ganz oben links an!');
-					   document.body.scrollTop = 0;
-					   document.documentElement.scrollTop = 0;
-			  </script>";
-	else
-    	collectData();
-}
+if (isset($_POST['submitbtn']))
+    collectData();
 
 /*
  * Retrieve data from the form-fields
@@ -122,12 +114,6 @@ function collectData()
 		$product->pquantity += $_POST[$productQuantity];
         $total += calcSubtotal($product);
     }
-
-	global $minTotal;
-	if($total < $minTotal) {
-		echo "<script>alert('Mindestbestellwert ist 7 Euro :)')</script>";
-		return;
-	}
     
     /* delivery is currently restricted to 6232 and at a fixed price
      * Also at the moment delivery is mandatory
@@ -143,8 +129,8 @@ function collectData()
     
     if ($orderID != -1 && $customerID != -1) {
         emailCustomer($orderID, $customerID, $email, $products, $total);
-        //emailWorkers($total);
-        //header("Location: http://meibaua.ml/confirmation.html");
+        emailWorkers($total);
+        header("Location: http://meibaua.ml/confirmation.html");
     }
     
 }
@@ -220,8 +206,7 @@ function uploadOrderData($products, $delivery, $total, $date, $customerID) {
  * Function for convenience: executes a query and returns value
  * of the created id
  */
-function executeQuery($sql)
-{
+function executeQuery($sql) {
     
     $createdID = -1;
     global $conn;
@@ -236,51 +221,87 @@ function executeQuery($sql)
     
 }
 
-function emailCustomer($orderID, $customerID, $email, $products, $total)
-{
+function emailCustomer($orderID, $customerID, $email, $products, $total) {
     
 	$deliveryText = "\nDie Produkte werden am Samstag in einer Woche geliefert!";
 	if(evaluateDeliveryDate() == true)
 		$deliveryText = "\nDie Produkte werden diesen Samstag geliefert!";
 		
-    $headers = 'From: dabauernbua.at' . "\r\n" . 'Reply-To: max.zeindl@gmail.com';
+    $headers = 'From: dabauernbua.at' . "\r\n" . 'Reply-To: dabauernbua@gmail.com';
     
+	$headers .= "MIME-Version: 1.0\r\n";
+	$headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+
     $to      = $email;
     $subject = 'Da Bauernbua Zahlungserinnerung und Bestellbestätigung';
     
-    $message = "
-„I g´frei mi, dass i di überzeugt hob!“
-
-dem Unternehmen „Da Bauernbua“ und mir zu vertrauen. Ich werde alles mir Mögliche tun, um dein Vertraun mit bestem Kundenservice zu belohnen.
-Ich hoffe du hast die Bestellung bis Mittwoch 23:59 Uhr abgeschickt und auch online schon bis Mittwoch 23:59 bezahlt? (Dein Zahlungseingang auf mein Geschäftskonto muss spätestens am Donnerstag vor der Lieferung sichtbar sein, denn nur dann kann ich deine Bestellung am darauffolgenden Samstag ausliefern. Alle Bestellungen ab Donnerstag werden nächsten Samstag ausgeliefert, sofern bis Mittwoch zuvor die Überweisung getätigt wurde und der Zahlungseingang bis Donnerstag am Konto sichtbar ist.) Bankverbindung findest du nochmal bei der Bestellübersicht.
-
-Wichtig: Gefällt dir mein Gedanke an Umweltschutz? - Dann bitte ich dich darum bei erneuter Bestellung die zur Lieferung verwendete Box am Freitagabend vor die Haustür ins Trockene zu stellen. Ich werde diese Box, wenn ich sie sehe, Samstagvormittag beim Ausliefern wieder aufsammeln, sodass wir auch hierbei auf Recycling achten.
-– WIR sind gegen Wegwerfgesellschaft
-
-Alles Gute
-Eicha Bauernbua
-Maximilian Zeindl
-Nachfolgend siehst du deinen Einkauf\n
-";
-
-    $message = $message . "Bestellübersicht:\n\n";
-    $message = $message . "Kundennummer: " . $customerID . "\n";
-    $message = $message . "Lieferart: Lieferung mit Liefergebühr (1,50€/Münster)\n";
-    $message = $message . "Bestellte Ware:\n\n";
-    
-	foreach($products as $productName => $product) {
-        $quantity = $product->pname;
-        if ($quantity == 0)
-            continue;
-        $message = $message . $quantity . "x " . $productName . "\n";
-    }
-    
-	$message = $message . $deliveryText;
-    $message = $message . "\nBitte zahle bis Mittwoch " . $total . " Euro auf das Konto: IBAN xyz ein.\n\n Alles Gute!";
-    
+	$message = createMessage($customerID, $orderID, $products, $total, $deliveryText);
+     
     mail($to, $subject, $message, $headers);
     
 }
+
+function createMessage($customerID, $orderID, $products, $total, $deliveryText) {
+
+	$mailtext = '
+	<html lang="de">
+	<head>
+		<style>
+			td {padding-right:: 30px;}
+			table, tr, td, th { border: 1px solid black; padding: 5px 35px 5px 5px; }
+			table {border-collapse: collapse;}
+		</style>
+	</head>
+	 
+	<body>
+	 
+	<h3>Danke für deinen Einkauf!<br>
+	Hier die wichtigsten Informationen zu deiner Bestellung:</h3>
+
+	<p><b>Kundennummer: ' . $orderID . '</b></p>
+	<p><b>Lieferart:</b> Lieferung mit Liefergebühr (1,50€/Münster)</p>
+	<p><b>Lieferdatum:</b>' . $deliveryText . ' </p>
+	<p><b>Bestellte Ware:</b></p>
+
+	<table>
+	<tr style="font-weight: bold;"><th>Menge</th><th>Produkt</th><th>Einheit</th><th>Preis</th></tr>
+
+';
+
+	foreach($products as $productName => $product) {
+        $quantity = $product->pquantity;
+        if ($quantity == 0)
+            continue;
+		$price = $product->pquantity * $product->pprice;
+		$mailtext .= '<tr><td>' . $quantity . '</td><td>' . $productName . '</td><td>' . $product->punit . '</td><td>' . $price . '</td></tr>';
+    }
+	$mailtext .= '<tr style="font-weight: bold;"><td>Gesamt: </td><td></td><td></td><td>' . $total . ' Euro</td></tr></table>';
+
+	$mailtext .= '
+
+	<p><b>Zahlung:</b> Bitte zahle <b>bis Mittwoch ' . $total . ' Euro (Lieferung ist hier inkludiert)</b> auf das Konto: <b>IBAN AT062050800001507003</b> ein.</p>
+
+	<p><b>Wichtig: Gefällt dir mein Gedanke an Umweltschutz? - Dann bitte ich dich, einen Korb oder Ähnliches vor die Eingangstüre zu stellen, damit ich die Produkte dort hineinlegen kann, dann achten wir auch hierbei auf Recycling.
+	– WIR sind gegen Wegwerfgesellschaft</b><p>
+
+	<p>„I g´frei mi, dass i di überzeugt hob!“<br>
+
+	dem Unternehmen „Da Bauernbua“ und mir zu vertrauen. Ich werde alles mir Mögliche tun, um dein Vertrauen mit bestem Kundenservice zu belohnen.
+	Ich hoffe du hast die Bestellung bis Mittwoch 23:59 Uhr abgeschickt und auch online schon bis Mittwoch 23:59 bezahlt? (Dein Zahlungseingang auf mein Geschäftskonto muss spätestens am Donnerstag vor der Lieferung sichtbar sein, denn nur dann kann ich deine Bestellung am darauffolgenden Samstag ausliefern. Alle Bestellungen ab Donnerstag werden nächsten Samstag ausgeliefert, sofern bis Mittwoch zuvor die Überweisung getätigt wurde und der Zahlungseingang bis Donnerstag am Konto sichtbar ist.) Bankverbindung findest du nochmal oben bei der Bestellübersicht.</p>
+
+	<p>Alles Gute<br>
+	Eicha Bauernbua<br>
+	Maximilian Zeindl<br></p>
+
+	</body>
+	</html>
+	';
+
+	return $mailtext;
+
+}
+
+
 
 function evaluateDeliveryDate() {
 
@@ -298,10 +319,10 @@ function emailWorkers($total)
     $email1 = "juwal.regev@hotmail.com";
     
     $message = "Es wurde ein neuer Einkauf in der Hoehe von: " . $total . " Euro getaetigt.\n\n";
-    $message = $message . "Fuer mehr Informationen klicken Sie hier: http://www.meibaua.ml/login.php";
+    $message = $message . "Fuer mehr Informationen klicken Sie hier: http://www.dabauernbua.at/login.php";
     
     $to      = $email1;
-    $subject = 'MeiBaua-Auftrag';
+    $subject = 'DaBauernbua-Auftrag';
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/plain; charset=iso-8859-1\r\n";
     
@@ -338,7 +359,7 @@ function emailWorkers($total)
 		</div>
 	<br>
 	<br>
-	<form id="form1" action="#" method="post">
+	<form id="form1" method="post" onsubmit="checkTotalValue(event)">
 		<input type="hidden" id="productCounter" name="productCounter" value="1"></input>
 		<div class="left">
 			<div id="personal" class="personalInfo">
@@ -388,7 +409,7 @@ function emailWorkers($total)
 		<div class="middle">
 			<div id="duplicater" class="items" style="margin-bottom: 30px;"> <span id="productH" class="productH">Produkt 1</span>
 				<div class="productimgdiv">
-					<img id="productimg" class="img-fluid productimg" src="img/.jpg" alt="Colorlib Template">
+					<img id="productimg" class="img-fluid productimg" src="img/.jpg" alt="Produkt">
 				</div>
 				<select id="products" class="products custom-select" name="products" onchange="update()">
 				</select>
@@ -406,7 +427,7 @@ function emailWorkers($total)
 		</div>
 		<div class="right">
 			<div id="clipboard"> <span style="display: block; text-align: center; font-weight: bold;">Einkaufsliste</span>
-				<br> <span id="contents">0x Karotten</span>
+				<br> <span id="contents"></span>
 				<br>
 				<input type="checkbox" id="agb" required> <span style="text-transform: none; font-size: 15px;">Ich stimme den <a href="img/agb.pdf" target="blank">
 				AGB</a> und <a href="img/datenschutz.pdf" target=_blank">Datenschutzbestimmungen</a> zu</span>
@@ -420,11 +441,13 @@ function emailWorkers($total)
 <script>
 
 // arrays get combined to structs "product"
-var pNames = <?php echo json_encode($pNames); ?> ; // stores names of products
-var pPrices = <?php echo json_encode($pPrices); ?> ; // stores prices of products
-var pTypes = <?php echo json_encode($pTypes); ?> ; // stores prices of products
-var pUnits = <?php echo json_encode($pUnits); ?> ; // stores prices of products
-var pimgName = <?php echo json_encode($pimgName); ?> ; // stores prices of products
+var pNames = <?php echo json_encode($pNames); ?> ; 
+var pPrices = <?php echo json_encode($pPrices); ?> ; 
+var pTypes = <?php echo json_encode($pTypes); ?> ; 
+var pUnits = <?php echo json_encode($pUnits); ?> ;
+var pimgName = <?php echo json_encode($pimgName); ?> ;
+
+var minTotal = 7;
 
 var products = createStructs();
 
@@ -551,13 +574,14 @@ function updateBtns() {
 
 
 
+var total = 0;
 /*
  * Gets called when product, quantity or plz gets changed
  * Updates prices, pictures
  */
 function update(radiobtn) {
 
-	var total = 0;
+	total = 0;
     var clipboard = ""; // shopping basket
     var plz = document.getElementById("plz").value;
 
@@ -684,6 +708,26 @@ function changeDelivery(radiobtn, clipboard, deliveryCost) {
     return clipboard;
 
 }
+
+function checkTotalValue(e) {
+
+	if(total < minTotal) {
+		alert('Der Mindestbestellwert ist ' + minTotal + ' Euro :-)');
+		e.preventDefault();
+		return false;
+	}
+	else if(!document.getElementById('delivery').checked) {
+		alert("Bitte haken Sie das Kästchen ganz oben links an!");
+		document.body.scrollTop = 0;
+		document.documentElement.scrollTop = 0;
+		e.preventDefault();
+		return false;
+	}
+	else
+		document.form1.submit();
+
+}
+
 
 function stopSubmitOnEnter (e) {
   var eve = e || window.event;

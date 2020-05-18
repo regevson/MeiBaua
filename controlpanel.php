@@ -36,12 +36,58 @@ if($conn->connect_error) {
 
 
 
+<?php
+
+$pNames = array();
+$pPrices = array();
+$pTypes = array();
+$pUnits = array();
+$pAvailability = array();
+$pImgName = array();
+$pInfo = array();
+
+downloadProducts();
+
+function downloadProducts() {
+    
+    // this info gets passed to JavaScript
+	global $pNames;
+	global $pPrices;
+	global $pTypes;
+	global $pUnits;
+	global $pAvailability;
+	global $pImgName;
+	global $pInfo;
+
+    global $conn;
+    $result = $conn->query("SELECT * FROM products");
+    
+    while ($row = $result->fetch_assoc()) {
+		$pNames[] = $row['product'];
+		$pPrices[] = $row['price'];
+		$pTypes[] = $row['type'];
+		$pUnits[] = $row['unit'];
+		$pAvailability[] = $row['available'];
+		$pImgName[] = $row['imgName'];
+		$pInfo[] = $row['info'];
+	}
+    
+}
+
+
+?>
 <form id="form1" action="#" method="post">
 
-	<div id="personal" class="personalInfo" style="margin: 0 auto; height: 650px;">
-		<label>Produktname</label>
+	<div id="personal" class="personalInfo" style="margin: 0 auto; height: auto; overflow: auto;">
+		<label>Produkt aendern:</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="product" name="product" placeholder="Gruener_Salat" required>
+		<select id="products" class="products custom-select" name="products" onchange="fillFields()"></select>
+		<br>
+		<br>
+
+		<label>Neues Produkt:</label>
+		<br>
+		<input id="newproduct" type="text" class="personalInfoInput" name="newproduct" value="" placeholder="Name des neuen Produkts">
 		<br>
 		<br>
 
@@ -53,7 +99,7 @@ if($conn->connect_error) {
 
 		<label>Einheit:</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="type" name="unit" placeholder="Gramm" required>
+		<input class="personalInfoInput" type="text" id="unit" name="unit" placeholder="Gramm" required>
 		<br>
 		<br>
 
@@ -65,17 +111,23 @@ if($conn->connect_error) {
 
 		<label>Verfuegbar ja/nein:</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="type" name="available" value="1" placeholder="1, 0, oder -1" required>
+		<input class="personalInfoInput" type="text" id="availability" name="available" placeholder="1, 0, oder -1" required>
+		<br>
+		<br>
+
+		<label>Bildname:</label>
+		<br>
+		<input class="personalInfoInput" type="text" id="imgname" name="imgname" placeholder="gruener_kopfsalat">
 		<br>
 		<br>
 
 		<label>Infotext:</label>
 		<br>
-		<input class="personalInfoInput" type="text" id="type" name="info" placeholder="currently not used">
+		<input class="personalInfoInput" type="text" id="info" name="info" placeholder="currently not used">
 		<br>
 		<br>
 
-	<div id="addProductDiv">
+	<div id="addProductDiv" style="margin-bottom: 20px;">
         <button id="morebtn" type="action" name="add">Produkt hinzufügen</button>
     </div>
 
@@ -95,47 +147,35 @@ else if(isset($_POST["change"]))
 	changeProduct();
 
 
-function analyzeButtons($value) {
-
-	//if $value doesnt contain "cancel" the returnval is 'false'
-	if(strcmp($value, "add") == True)
-		addProduct();
-	else 
-		changeProduct();
-
-}
-
 function addProduct() {
 
-	$product = $_POST["product"];
+	$product = $_POST["newproduct"];
 	$price = $_POST["price"];
 	$type = $_POST["type"];
 	$unit = $_POST["unit"];
 	$available = $_POST["available"];
+	$imgName = $_POST["imgname"];
 	$info = $_POST["info"];
 
-	addColumn($product); //Add new column 'nameOfNewProduct' to orders-table
-
-
-  $sql = "INSERT INTO products (product, price, type, unit, available, info) VALUES
-                ('$product', '$price', '$type', '$unit', '$available', '$info')";
+  $sql = "INSERT INTO products (product, price, type, unit, available, imgName, info) VALUES
+                ('$product', '$price', '$type', '$unit', '$available', '$imgName', '$info')";
 
         return executeQuery($sql);
 
 }
 
-//right now it only changes the availability to 'not available' (0) and the info-text
 function changeProduct() {
 
-	$product = $_POST["product"];
+	$product = $_POST["products"];
 	$price = $_POST["price"];
 	$type = $_POST["type"];
 	$unit = $_POST["unit"];
 	$available = $_POST["available"];
+	$imgName = $_POST["imgname"];
 	$info = $_POST["info"];
 	
 	$sql = "UPDATE `products` SET `price` = '$price', `type` = '$type', `unit` = '$unit', `available` = '$available', 
-		`info` = '$info' WHERE `product` = '" . $product . "'";
+		`imgName` = '$imgName', `info` = '$info' WHERE `product` = '" . $product . "'";
 
     return executeQuery($sql);
 
@@ -153,38 +193,8 @@ function executeQuery($sql) {
      echo "Error: " . $sql . "<br>" . $conn->error;
   }
 
+echo "<meta http-equiv='refresh' content='0'>";
   return $createdID;
-
-}
-
-
-function addColumn($name) {
-
-	$lastAddedProduct = getLastAddedProduct();
-
-	global $conn;
-	$sql = "ALTER TABLE `orders` ADD `" . $name . "` INT NOT NULL DEFAULT '0' AFTER `" . $lastAddedProduct . "`";
-	 if ($conn->query($sql) === TRUE) {
-            echo "Column added successfully";
-        } else {
-            echo "Error adding column: " . $conn->error;
-        }
-
-
-}
-
-function getLastAddedProduct() {
-
-	global $conn;
-
-
-  $sql = "SELECT product FROM products ORDER BY productID DESC LIMIT 1";
-  $result = $conn->query($sql);
-
-  if($row = $result->fetch_assoc())
-     return $row['product'];
-  else
-	  return 'orderID'; // if no product is in products-table, then add new product (in orders-table) after "orderID"-column!
 
 }
 
@@ -193,6 +203,93 @@ function getLastAddedProduct() {
 
 
 </div>
+
+
+	
+<script>
+
+// arrays get combined to structs "product"
+var pNames = <?php echo json_encode($pNames); ?> ; 
+var pPrices = <?php echo json_encode($pPrices); ?> ; 
+var pTypes = <?php echo json_encode($pTypes); ?> ;
+var pUnits = <?php echo json_encode($pUnits); ?> ;
+var pAvailability = <?php echo json_encode($pAvailability); ?> ;
+var pImgName = <?php echo json_encode($pImgName); ?> ;
+var pInfo = <?php echo json_encode($pInfo); ?> ;
+
+var products = createStructs();
+addOptions(products);
+fillFields();
+
+function createStructs() {
+
+	function Product(name, price, type, unit, imgname) {
+		this.name = name;
+		this.price = price;
+		this.type = type;
+		this.unit = unit;
+		this.imgname = imgname;
+	}
+
+	var products = [];
+	for(var i = 0; i < pNames.length; i++) {
+		products[i] = new Product(pNames[i], pPrices[i], pTypes[i], pUnits[i], pImgName[i]);
+	}
+
+	return products;
+
+}
+
+
+/* 
+ * Add options (products) to option-dropdown
+ */
+function addOptions(products) {
+
+	var uniqueTypes = Array.from(new Set(pTypes))
+
+    var select = document.getElementById('products');
+
+    for (var i = 0; i < uniqueTypes.length; i++) {
+		var optGroup = document.createElement('OPTGROUP');
+    	optGroup.label = uniqueTypes[i];
+
+    	for (var j = 0; j < products.length; j++) {
+			var product = products[j];
+			if(uniqueTypes[i] == product.type) {
+				var option = document.createElement('option');
+				option.text = product.name;
+				option.value = product.name;
+				optGroup.appendChild(option);
+			}
+		}
+
+		select.appendChild(optGroup);
+    }
+
+}
+
+function fillFields() {
+
+    var selectedProduct = document.getElementById('products');
+	var selectedProductName = selectedProduct.value; // value of selected product (its name)
+	var pIndex = pNames.indexOf(selectedProductName);
+
+    document.getElementById('newproduct').value = "";
+    document.getElementById('price').value = pPrices[pIndex];
+    document.getElementById('unit').value = pUnits[pIndex];
+    document.getElementById('type').value = pTypes[pIndex];
+    document.getElementById('availability').value = pAvailability[pIndex];
+    document.getElementById('imgname').value = pImgName[pIndex];
+    document.getElementById('info').value = pInfo[pIndex];
+	
+
+}
+
+
+
+
+</script>
 
     </body>
 

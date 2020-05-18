@@ -95,14 +95,17 @@ function printAvailableProducts($products, $types) {
 
 function printUnavailableProducts($products) {
 
-	echo '<div class="wrapper" style="height: auto; overflow: auto;">';
 	echo '<h2 style="clear: both; text-align: center; font-size: 28px; padding-top: 3rem;">Noch im Wachstum:</h2>';
 
+	echo '<div></div>';
+	echo '<div class="wrapper" style="height: auto; overflow: auto;">';
+	echo '<div></div>';
+	echo '<div></div>';
 	foreach($products as $productName => $product) {
-		echo '<div id="duplicater" class="dup_products items" style="opacity:0.6;">
+		echo '<div id="duplicater" class="items" style="opacity:0.6;">
 			<span id="productH" class="productH" style="font-weight: bold; color: #6c0303;">Noch im Wachstum</span>
 			<div class="productimgdiv">
-				<img id="productimg" class="img-fluid productimg" src="img/' . $productName . '.jpeg" alt="' . $productName . '">
+				<img id="productimg" class="img-fluid productimg" src="img/' . $productName . '.jpeg">
 			</div>
 			<span id="products" class="products products_products" name="products">' . $productName . '</span>
 			<span id="products" class="products products_products" name="products" style="font-size: 12px;">(' . $product->punit . ')</span>

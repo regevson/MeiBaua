@@ -287,6 +287,9 @@
 	}
 
 
+
+
+
 @media only screen and (max-width: 1677px) {
 		#form1 {
 				width: 1370px;
@@ -368,7 +371,6 @@
 		clear:both;
 	}
 
-
 }
 
 @media only screen and (max-width: 523px) {
@@ -387,6 +389,7 @@
 	.items:nth-child(odd){
 		clear:both;
 	}
+	
 
 }
 
