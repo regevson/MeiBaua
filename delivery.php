@@ -21,30 +21,7 @@ if($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$toNames = array();
-$quantityByName = array();
-//number of orders (rows in html)
-$rowCount = 0;
 
-
-downloadProducts();
-
-function downloadProducts() {
-
-	global $toNames;
-	global $quantityByName;
-
-	global $conn;
-	$result = $conn->query("SELECT * FROM products");
-
-	while($row = $result->fetch_assoc()) {
-			$productName = $row['product'];
-
-			$toNames[] = $productName;
-			$quantityByName[$productName] = 0;
-	} 
-
-}
 
 
 
@@ -83,84 +60,71 @@ function downloadProducts() {
 <?php
 function collectData() {
 
-		$customerData = collectCustomerData();
-		$orderData = collectOrderData(end($customerData));
-		displayData($customerData, $orderData);
+		$customers = createCustomer();
+		displayData($customers);
 
 }
 
 
-function displayData($customerData, $orderData) {
-
-		global $toNames;
-		//customer data
-    	$customerID_arr = $customerData[0];
-		$fn_arr = $customerData[1];
-		$sn_arr = $customerData[2];
-		$plz_arr = $customerData[3];
-		$city_arr = $customerData[4];
-		$house_arr = $customerData[5];
-		$tel_arr = $customerData[6];
-		$email_arr = $customerData[7];
-		$paid_arr = $customerData[8];
-		$date_arr = $customerData[9];
-
-		//order data
-		$orderID_arr = end($customerData);
-		$quantityByName_arr = $orderData[0];
-		$delivery_arr = $orderData[1];
-		$total_arr = $orderData[2];
-		$done_arr = $orderData[3];
-
-
+function displayData($customers) {
+		
 		echo "<form method='post' action=''>";
 		$currentplz = 0;
-		for($row = 0; $row < count($orderID_arr); $row++) {
-				$plz = $plz_arr[$row];
-				if(strcmp($plz, $currentplz) != 0){
+		for($row = 0; $row < count($customers); $row++) {
+				$customer = $customers[$row];
+				$order = $customer->order;
+				$items = $order->items;
+
+				$plz = $customer->plz;
+				if(strcmp($plz, $currentplz) != 0){ // if different
 						$currentplz = $plz;
 						echo "<span class='plzh'>PLZ: " . $currentplz . "</span><br>";
 				}
+
+				$paid = "";
+				if($order->paid == 1)
+					$paid = "BEZAHLT";
+
 				$output = "<div class='orderBox'>
 
-				<p class='paidInfo'>" . $paid_arr[$row] . "</p>
+				<p class='paidInfo'>" . $paid . "</p>
 
-				<p class='dateInfo'>" . $date_arr[$row] . "</p>
+				<p class='dateInfo'>" . $order->date . "</p>
 					
 				<div class='labeldiv'><span class='labels'>Auftragsnummer:</span></div>
-				<span class='content'>" . $orderID_arr[$row] . "</span>
+				<span class='content'>" . $order->orderid . "</span>
 				<br>
 
 				<div class='labeldiv'><span class='labels'>Kundennummer:</span></div>
-				<span class='content'>" . $customerID_arr[$row] . "</span>
+				<span class='content'>" . $customer->customerid . "</span>
 				<br>
 
 				<div class='labeldiv'><span class='labels'>Vorname:</span></div>
-				<span class='content'>" . $fn_arr[$row] . "</span>
+				<span class='content'>" . $customer->fn . "</span>
 				<br>
 
 				<div class='labeldiv'><span class='labels'>Nachname:</span></div>
-				<span class='content'>" . $sn_arr[$row] . "</span>
+				<span class='content'>" . $customer->sn . "</span>
 				<br>
 
 				<div class='labeldiv'><span class='labels'>PLZ:</span></div>
-				<span class='content'>" . $plz_arr[$row] . "</span>
+				<span class='content'>" . $customer->plz . "</span>
 				<br>
 
 				<div class='labeldiv'><span class='labels'>Ort:</span></div>
-				<span class='content'>" . $city_arr[$row] . "</span>
+				<span class='content'>" . $customer->city . "</span>
 				<br>
 
 				<div class='labeldiv'><span class='labels'>Hausnummer:</span></div>
-				<span class='content'>" . $house_arr[$row] . "</span>
+				<span class='content'>" . $customer->house . "</span>
 				<br>
 
 				<div class='labeldiv'><span class='labels'>Tel:</span></div>
-				<span class='content'>" . $tel_arr[$row] . "</span>
+				<span class='content'>" . $customer->tel . "</span>
 				<br>
 
 				<div class='labeldiv'><span class='labels'>E-Mail:</span></div>
-				<span class='content'>" . $email_arr[$row] . "</span>
+				<span class='content'>" . $customer->email . "</span>
 				<br>
 
 				<div class='labeldiv'><span class='labels'>Bestellung:</span></div>
@@ -168,26 +132,26 @@ function displayData($customerData, $orderData) {
 
 				<ul>";
 				
-				$quantityByName = $quantityByName_arr[$row];
-				for($x = 0; $x < count($quantityByName); $x++) {
-						$product = $toNames[$x];
-						$quantity = $quantityByName[$product];
-						if($quantity == 0)
-								continue;
-						$output = $output . "<li>" . $quantity . "x " . $product . "</li>";
+				for($x = 0; $x < count($items); $x++) {
+						$item = $items[$x];
+						$pName = $item->productname;
+						$pQuantity = $item->productquantity;
+						if($pQuantity == 0)
+							continue;
+						$output = $output . "<li>" . $pQuantity . "x " . $pName. "</li>";
 				}
 
 				$output = $output . "</ul></div>
 
 				<div class='labeldiv'><span class='labels'>Betrag:</span></div>
-				<span class='content'><b>" . $total_arr[$row] . '</b></span>';
+				<span class='content'><b>" . $order->total . '</b></span>';
 
 						
 				$output = $output . "<div style='clear: both; text-align: center;'>";
-				if(strcmp($paid_arr[$row], "bezahlt") == true) 
-						$output = $output . "<button type='submit' id='orderbtn' class='paidbtn' value='" . $customerID_arr[$row] . ",paid' name='" . $row . "'>Zahlung eingegangen</button><br>";
-				$output = $output . "<button type='submit' id='orderbtn' class='deliverybtn' value='" . $customerID_arr[$row] . ",done' name='" . $row . "'>Lieferung erfolgt</button><br>
-				<button type='submit' id='orderbtn' class='cancelbtn' value='" . $customerID_arr[$row] . ",cancel' name='" . $row . "'>stornieren</button></div></div>";
+				if($order->paid == 0)
+						$output = $output . "<button type='submit' id='orderbtn' class='paidbtn' value='" . $customer->customerid . ",paid' name='" . $row . "'>Zahlung eingegangen</button><br>";
+				$output = $output . "<button type='submit' id='orderbtn' class='deliverybtn' value='" . $customer->customerid . ",done' name='" . $row . "'>Lieferung erfolgt</button><br>
+				<button type='submit' id='orderbtn' class='cancelbtn' value='" . $customer->customerid . ",cancel' name='" . $row . "'>stornieren</button></div></div>";
 						
 				echo $output;
 
@@ -294,88 +258,143 @@ function emailCustomer($email, $value) {
 }
 
 
-function collectCustomerData() {
+class Customer {
 
-    	$customerID_arr = array();
-		$fn_arr = array();
-		$sn_arr = array();
-		$plz_arr = array();
-		$city_arr = array();
-		$house_arr = array();
-		$tel_arr = array();
-		$email_arr = array();
-		$paid_arr= array();
-		$date_arr = array();
-		$orderID_arr = array();
-		$arrIndex = 0;
+	public $customerid;
+	public $fn;
+	public $sn;
+	public $plz;
+	public $city;
+	public $house;
+	public $tel;
+	public $email;
+	public $order;
 
+}
+
+function createCustomer() {
+
+    	
+		$orders = collectOrderData();
 		global $conn;
 		$result = $conn->query("SELECT * FROM customers ORDER BY plz asc");
 
+		$customers = array();
   		while($row = $result->fetch_assoc()) {
-				$customerID_arr[$arrIndex] = $row['customerID'];
-				$fn_arr[$arrIndex] = $row['fn'];
-				$sn_arr[$arrIndex] = $row['sn'];
-				$plz_arr[$arrIndex] = $row['plz'];
-				$city_arr[$arrIndex] = $row['city'];
-				$house_arr[$arrIndex] = $row['housenumber'];
-				$tel_arr[$arrIndex] = $row['tel'];
-				$email_arr[$arrIndex] = $row['email'];
-				$paid = $row['paid'];
-				if($paid == 1)
-					$paid_arr[$arrIndex] = "bezahlt";
-				else
-					$paid_arr[$arrIndex] = "";
-				$date_arr[$arrIndex] = $row['purchaseDate'];
-				$orderID_arr[$arrIndex] = $row['orderID'];
-				$arrIndex++;
+				$customer = new Customer();
+				$customer->customerid = $row['customerID'];
+				$customer->fn = $row['fn'];
+				$customer->sn = $row['sn'];
+				$customer->plz = $row['plz'];
+				$customer->city = $row['city'];
+				$customer->house = $row['housenumber'];
+				$customer->tel = $row['tel'];
+				$customer->email = $row['email'];
+				$customer->order = $orders[strval($customer->customerid)];
+				$customers[] = $customer;
 		}
 
-		$data_arr = array($customerID_arr, $fn_arr, $sn_arr, $plz_arr, $city_arr, 
-			$house_arr, $tel_arr, $email_arr, $paid_arr, $date_arr, $orderID_arr);
-		return $data_arr;
+		return $customers;
+
+}
+
+
+
+class Order {
+
+	public $orderid;
+	public $delivery;
+	public $total;
+	public $date;
+	public $items;
+	public $paid;
+	public $customerid;
+
+}
+
+
+
+function collectOrderData() {
+		
+	$pNames = downloadProductNamesByID();
+
+	global $conn;
+  	$sql = "SELECT * FROM orders";
+ 	$result = $conn->query($sql);
+
+	$orders = array(); // key: customerID, value: order-obj
+  	while($row = $result->fetch_assoc()) {
+		$order = new Order();
+		$order->orderid = $row['orderID'];
+		$order->delivery= $row['delivery'];
+		$order->total = $row['total'];
+		$order->date = $row['timestamp'];
+		$order->customerid = $row['customerID'];
+		$order->items = getItems($order->orderid, $pNames);
+		$order->paid= $row['paid'];
+		$orders[strval($order->customerid)] = $order;
+	}
+
+	return $orders;
+	
+}
+
+function downloadProductNamesByID() {
+
+
+	global $conn;
+  	$sql = "SELECT productID, product FROM products";
+ 	$result = $conn->query($sql);
+
+	$productNames = array();
+  	while($row = $result->fetch_assoc()) {
+		$id = $row['productID'];
+		$productNames[$id] = $row['product'];
+	}
+
+	return $productNames;
+
+}
+
+
+class Item {
+
+	public $productname;
+	public $productquantity;
+
+}
+
+function getItems($orderID, $pNames) {
+
+	global $conn;
+  	$sql = "SELECT * FROM orderToProductsLedger WHERE orderID='$orderID'";
+ 	$result = $conn->query($sql);
+
+	$items = array(); 
+  	while($row = $result->fetch_assoc()) {
+		$item = new Item();
+		$productID = $row['productID'];
+		$item->productname = $pNames[$productID];
+		$item->productquantity = $row['quantity'];
+		$items[] = $item;
+	}
+
+	return $items;
 
 }
 
 
 
 
-function collectOrderData($orderID_arr) {
-
-		global $toNames;
-		global $quantityByName;
-
-    	$quantityByName_arr = array();
-		$delivery_arr = array();
-		$total_arr = array();
-		$done_arr = array();
-		$arrIndex = 0;
-
-		for($i = 0; $i < count($orderID_arr); $i++) {
-				$orderID = $orderID_arr[$i];
-
-				$result = getDataFromDB("orders", "orderID", $orderID);
-  				if($row = $result->fetch_assoc()) {
-					//fill up $quantityByName-array with ordered items and quantity
-					for($x = 0; $x < count($quantityByName); $x++) {
-							$product = $toNames[$x];
-							$quantity = $row[$product];
-							$quantityByName[$product] = $quantity;
-					}
-
-					$quantityByName_arr[$i] = $quantityByName;
-					$delivery_arr[$i] = $row['delivery'];
-					$total_arr[$i] = $row['total'];
-					$done_arr[$i] = $row['done'];
-				}
-
-		}
 
 
-		$data_arr = array($quantityByName_arr, $delivery_arr, $total_arr, $done_arr);
-		return $data_arr;
 
-}
+
+
+
+
+
+
 
 
 function getDataFromDB($table, $where, $condition) {

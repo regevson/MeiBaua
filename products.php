@@ -20,7 +20,7 @@ class Product {
 	public $pprice;
 	public $ptype;
 	public $punit;
-	public $pquantity;
+	public $pimgname;
 
 }
 
@@ -43,7 +43,7 @@ function downloadProducts($avail)
 		$product->pprice = $row['price'];
 		$product->ptype = $row['type'];
 		$product->punit = $row['unit'];
-		$product->pquantity= 0;
+		$product->pimgname = $row['imgName'];
 		$products[$product->pname] = $product;
 		$types[] = $product->ptype;
 	}
@@ -74,12 +74,12 @@ function printAvailableProducts($products, $types) {
 		echo '<span class="typesubheading">' . $uniqueTypes[$x] . '</span><br>';
 		foreach($products as $productName => $product) {
 			if($product->ptype == $uniqueTypes[$x]) {
-					echo '<div id="duplicater" class="dup_products items">
+					echo '<div id="duplicater" class="items">
 						<span id="productH" class="productH" style="font-weight: bold; color: green;">Erhältlich</span>
 						<div class="productimgdiv">
-							<img id="productimg" class="img-fluid productimg" src="img/' . $productName . '.jpeg" alt="' . $productName . '">
+							<img id="productimg" class="img-fluid productimg" src="img/' . $product->pimgname . '.jpeg" alt="' . $productName . '">
 						</div>
-						<span id="products" class="products products_products" name="products">' . umlauts($productName) . '</span>
+						<span id="products" class="products products_products" name="products">' . $productName . '</span>
 						<span id="products" class="products products_products" name="products" style="font-size: 12px;">(' . $product->punit . ')</span>
 						<div class="subtotal" align="center" style="margin-top:22px;"> <span id="individualSubtotal">' . $product->pprice . '</span>
 							<span>&euro;</span>
@@ -104,7 +104,7 @@ function printUnavailableProducts($products) {
 			<div class="productimgdiv">
 				<img id="productimg" class="img-fluid productimg" src="img/' . $productName . '.jpeg" alt="' . $productName . '">
 			</div>
-			<span id="products" class="products products_products" name="products">' . umlauts($productName) . '</span>
+			<span id="products" class="products products_products" name="products">' . $productName . '</span>
 			<span id="products" class="products products_products" name="products" style="font-size: 12px;">(' . $product->punit . ')</span>
 			<div class="subtotal" align="center" style="margin-top:22px;"> <span id="individualSubtotal">' . $product->pprice . '</span>
 				<span>&euro;</span>
@@ -115,21 +115,6 @@ function printUnavailableProducts($products) {
 	echo '</div>';
 
 }
-
-
-function umlauts($string) {
- $string = str_replace("_", " ", $string);
- $string = str_replace("ae", "ä", $string);
- $string = str_replace("ue", "ü", $string);
- $string = str_replace("oe", "ö", $string);
- $string = str_replace("Ae", "Ä", $string);
- $string = str_replace("Ue", "Ü", $string);
- $string = str_replace("Oe", "Ö", $string);
- $string = str_replace("ss", "ß", $string);
- $string = str_replace("´", "", $string);
- return $string;
-}
-
 
 ?>
 <!DOCTYPE html>
@@ -148,7 +133,7 @@ function umlauts($string) {
 <body>
     <h1 style="text-align: center; margin-top: 30px;">"Da Bauernbua" Produkte</h1>
 	<br>
-	<button class="orderbtn" style="display: block; margin: 0 auto; background: #008074; border: 2px solid #008074;">
+	<button class="orderbtn" style="display: block; margin: 0 auto; background: #009510; border: 2px solid #008074;">
 	<a href="orders.php" style="color: white;">zur Bestellung</a></button><br>
    
 	<?php

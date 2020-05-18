@@ -273,6 +273,7 @@
 		width: 1350px;
 	}
 
+
 	.typesubheading {
 		font-weight: 600;
 		font-size: 16px;
@@ -309,7 +310,7 @@
     }
 }
 
-@media only screen and (max-width: 1160px) {
+@media only screen and (max-width: 1380px) {
 		#form1{
 				width: 310px;
 		}
@@ -363,6 +364,11 @@
 		margin: 0 auto;
 	}
 
+	.items:nth-child(3n){
+		clear:both;
+	}
+
+
 }
 
 @media only screen and (max-width: 523px) {
@@ -373,6 +379,15 @@
 	.wrapper {
 		width: 360px;
 	}
+
+	.items:nth-child(3n){
+		clear: none;
+	}
+
+	.items:nth-child(odd){
+		clear:both;
+	}
+
 }
 
 

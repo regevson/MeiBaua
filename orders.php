@@ -20,6 +20,7 @@ $minTotal = 7;
 
 class Product {
 
+	public $pid;
 	public $pname;
 	public $pprice;
 	public $ptype;
@@ -33,6 +34,7 @@ $pNames = array();
 $pPrices = array();
 $pTypes = array();
 $pUnits = array();
+$pimgName = array();
 
 downloadProducts();
 
@@ -49,12 +51,14 @@ function downloadProducts()
 	global $pPrices;
 	global $pTypes;
 	global $pUnits;
+	global $pimgName;
 
     global $conn;
     $result = $conn->query("SELECT * FROM products WHERE available=1");
     
     while ($row = $result->fetch_assoc()) {
 		$product = new Product();
+		$product->pid = $row['productID'];
 		$product->pname = $row['product'];
 		$product->pprice = $row['price'];
 		$product->ptype = $row['type'];
@@ -66,6 +70,7 @@ function downloadProducts()
 		$pPrices[] = $product->pprice;
 		$pTypes[] = $product->ptype;
 		$pUnits[] = $product->punit;
+		$pimgName[] = $row['imgName'];
 	}
     
 }
@@ -111,7 +116,7 @@ function collectData()
          * $_POST[$product] returns the value of the selected element
          */
         $productID = "products" . $x;
-        $selectedProductName  = $_POST[$productID]; // index into @toNames
+        $selectedProductName  = $_POST[$productID]; // returns name of product
 		$product = $products[$selectedProductName];
         $productQuantity     = "number" . $x;
 		$product->pquantity += $_POST[$productQuantity];
@@ -133,8 +138,8 @@ function collectData()
      */
     $delivery = "letdeliver"; // current policy (delivery mandatory)
     $total += $deliveryCost; // is fetched from global var declared at top
-    $orderID    = uploadOrderData($products, $delivery, $total);
-    $customerID = uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $date, $orderID);
+    $customerID = uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email);
+    $orderID    = uploadOrderData($products, $delivery, $total, $date, $customerID);
     
     if ($orderID != -1 && $customerID != -1) {
         emailCustomer($orderID, $customerID, $email, $products, $total);
@@ -177,44 +182,39 @@ function evalPLZ($plz)
     
 }
 
-/*
- * Upload the entered data regarding the purchase
- */
-function uploadOrderData($products, $delivery, $total)
-{
-    
-    $sql = "INSERT INTO orders (";
-	foreach($products as $productName => $product)
-        $sql     = $sql . $productName . ", ";
-    
-    $sql = $sql . "delivery, total) VALUES (";
-    
-	foreach($products as $productName => $product)
-        $sql     = $sql . "'" . $product->pquantity . "', ";
-    
-    $sql = $sql . "'" . $delivery . "', '" . $total . "')";
-    
-    //echo"<br> $sql <br>";
-    //echo $total;
-	echo $sql . "<br><br>";
-    $orderID = executeQuery($sql); // get orderID-field of newly inserted row
-    return $orderID;
-    
-}
+
 
 /*
  * Upload the entered data regarding the customer
  */
-function uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email, $date, $orderID)
-{
+function uploadPersonalData($fname, $sname, $plz, $city, $house, $tel, $email) {
     
-    $sql = "INSERT INTO customers (fn, sn, plz, city, housenumber, tel, email, purchaseDate, orderID) VALUES
-                ('$fname', '$sname', '$plz', '$city', '$house', '$tel', '$email', '$date', '$orderID')";
-    
-    //echo"<br> $sql <br>";
+    $sql = "INSERT INTO customers (fn, sn, plz, city, housenumber, tel, email) VALUES
+                ('$fname', '$sname', '$plz', '$city', '$house', '$tel', '$email')";
     return executeQuery($sql);
     
 }
+
+
+/*
+ * Upload the entered data regarding the purchase
+ */
+function uploadOrderData($products, $delivery, $total, $date, $customerID) {
+    
+	$sql = "INSERT INTO orders (delivery, total, timestamp, customerID) VALUES ('$delivery', '$total', '$date', '$customerID')";
+    $orderID = executeQuery($sql); // get orderID-field of newly inserted row
+
+	foreach($products as $productName => $product) {
+		if($product->pquantity == 0)
+			continue;
+		$sql = "INSERT INTO orderToProductsLedger (orderID, productID, quantity) VALUES ('$orderID', '$product->pid', '$product->pquantity')";
+    	executeQuery($sql);
+	}
+
+	return $orderID;
+
+}
+
 
 /*
  * Function for convenience: executes a query and returns value
@@ -272,7 +272,7 @@ Nachfolgend siehst du deinen Einkauf\n
         $quantity = $product->pname;
         if ($quantity == 0)
             continue;
-        $message = $message . $quantity . "x " . umlauts($productName) . "\n";
+        $message = $message . $quantity . "x " . $productName . "\n";
     }
     
 	$message = $message . $deliveryText;
@@ -307,19 +307,6 @@ function emailWorkers($total)
     
     mail($to, $subject, $message, $headers);
     
-}
-
-function umlauts($string) {
- $string = str_replace("_", " ", $string);
- $string = str_replace("ae", "ä", $string);
- $string = str_replace("ü", "ue", $string);
- $string = str_replace("ö", "oe", $string);
- $string = str_replace("Ä", "Ae", $string);
- $string = str_replace("Ü", "Ue", $string);
- $string = str_replace("Ö", "Oe", $string);
- $string = str_replace("ß", "ss", $string);
- $string = str_replace("´", "", $string);
- return $string;
 }
 
 ?>
@@ -437,6 +424,7 @@ var pNames = <?php echo json_encode($pNames); ?> ; // stores names of products
 var pPrices = <?php echo json_encode($pPrices); ?> ; // stores prices of products
 var pTypes = <?php echo json_encode($pTypes); ?> ; // stores prices of products
 var pUnits = <?php echo json_encode($pUnits); ?> ; // stores prices of products
+var pimgName = <?php echo json_encode($pimgName); ?> ; // stores prices of products
 
 var products = createStructs();
 
@@ -454,16 +442,17 @@ boxes.push(original); // add first box
  */
 function createStructs() {
 
-	function Product(name, price, type, unit) {
+	function Product(name, price, type, unit, imgname) {
 		this.name = name;
 		this.price = price;
 		this.type = type;
 		this.unit = unit;
+		this.imgname = imgname;
 	}
 
 	var products = [];
 	for(var i = 0; i < pNames.length; i++) {
-		products[i] = new Product(pNames[i], pPrices[i], pTypes[i], pUnits[i]);
+		products[i] = new Product(pNames[i], pPrices[i], pTypes[i], pUnits[i], pimgName[i]);
 	}
 
 	return products;
@@ -487,7 +476,7 @@ function addOptions(products) {
 			var product = products[j];
 			if(uniqueTypes[i] == product.type) {
 				var option = document.createElement('option');
-				option.text = umlauts(insertSpaces(product.name));
+				option.text = product.name;
 				option.value = product.name;
 				optGroup.appendChild(option);
 			}
@@ -596,7 +585,8 @@ function update(radiobtn) {
         var subtotal = productPrice * quantity;
         indivSubtotal.innerHTML = financial(subtotal);
 
-        updateImages(productimg, selectedProductIndex);
+		var imgName = products[selectedProductIndex].imgname;
+        updateImages(productimg, imgName);
 
 		if(quantity == 0)
 			continue;
@@ -648,12 +638,7 @@ function financial(x) {
  * @productimg is the img to be updated, @imgIndex is the index of the img into the @products_array
  *
  */
-function updateImages(productimg, imgIndex) {
-
-    var imgName = products[imgIndex].name;
-    productimg.src = "img/" + imgName + ".jpeg";
-
-}
+function updateImages(productimg, imgName) { productimg.src = "img/" + imgName + ".jpeg"; }
 
 /*
  * Returns deliveryCost according to @plz
@@ -715,20 +700,6 @@ function stopSubmitOnEnter (e) {
 
     return false;
   }
-}
-
-function umlauts(str) {
-	str = str.split("ue").join("ü");
-	str = str.split("Ue").join("Ü");
-	str = str.split("ae").join("ä");
-	str = str.split("Ae").join("Ä");
-	str = str.split("oe").join("ö");
-	str = str.split("Oe").join("Ö");
-	return str;
-}
-
-function insertSpaces(str) {
-	return str.split("_").join(" ");
 }
 
 window.onload = update();
