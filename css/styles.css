@@ -1,4 +1,74 @@
-	body {
+.flex-container {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+.flex-container > div {
+  justify-content: center;
+  width: 300px;
+  margin: 10px;
+  font-size: 30px;
+  border-radius: 10px;
+  border: 1px solid silver;
+  padding: 10px;
+  background-image: url(../img/kistebg.jpg)
+}	
+	
+.boxesH {
+	font-weight: bold;
+	font-size: 18px;
+}
+
+.boxesp { font-size: 16px;}
+
+.orderbtn {
+	margin: 0 auto;	
+	background: white;
+display: block;
+text-transform: uppercase;
+cursor: pointer;
+border: 1px solid black;
+border-radius: 4px;
+height: 37px;
+font-weight: bold;
+font-size: 15px;
+
+}
+
+.basket {
+
+	height: 100px;
+	font-size: 17px;
+	background: white;
+	border: 2px solid black;
+	padding: 10px;
+
+}
+
+.productselect {
+		text-transform: uppercase;
+		height: 32px;
+		display: block;
+		width: 190px;
+		font-size: 13px;
+		margin: 0 auto;
+		margin-bottom:10px;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+body {
 			font-family: 'Poppins', sans-serif !important;
 		padding-left: 10px !important;
 		padding-right: 10px !important;
@@ -64,15 +134,7 @@
 			transform: scale(1.04);
 	}
 
-	.products {
-			text-transform: uppercase;
-			height: 32px;
-			display: block;
-			width: 80%;
-			font-size: 13px;
-			margin: 0 auto;
-			margin-bottom:10px;
-	}
+	
 
 	.products_products {
 		font-weight: bold;

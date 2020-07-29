@@ -338,7 +338,7 @@ function removeJob($customerIndex, $value) {
 		else
 			echo "Error deleting record: " . $conn->error;
 
-		emailCustomer($customer->email, $customer->order->items, $value);	
+		emailCustomer($customer->email, $value);	
 			
  		echo "<meta http-equiv='refresh' content='0'>";
 
@@ -361,25 +361,17 @@ function confirmPayment($customerIndex) {
 
 }
 
-function emailCustomer($email, $items, $value) {
+function emailCustomer($email, $value) {
 
 		if($value == "done")
         	$message = 'Deine "Da Bauernbua" Lieferung ist da!' . "\nVielen Dank für den Einkauf!";
 		else
         	$message = 'Deine "Da Bauernbua" Lieferung wurde erfolgreich storniert!\n';
 
-        for($x = 0; $x < sizeof($items); $x++) {
-				$item = $items[$x];
-                $pName = $item->productname;
-                $pQuantity = $item->productquantity;
-                $message = $message . $pQuantity . "x " . $pName . "\n";
-        }
-
-
         $to      = $email;
-        $subject = 'MeiBaua-Lieferung';
-        $headers = 'From: meibaua.ml' . "\r\n" .
-            'Reply-To: max.zeindl@gmail.com';
+        $subject = 'Da Bauernbua-Lieferung';
+        $headers = 'From: dabauernbua.at' . "\r\n" .
+            'Reply-To: dabauernbua@gmail.com';
 
         mail($to, $subject, $message, $headers);
 

@@ -363,6 +363,35 @@ function roundPrice($price, $nearest = 5, $decimals = 2) {
 </head>
 
 <body>
+
+ <div class="flex-container">
+   <div>
+
+
+	<span class="boxesH">Deine Box:</span>
+	<div id="clipboard">Inhalt:
+	</div>
+
+			
+	<button class="orderbtn"><a href="orders_new.php">Bestellen</a></button>
+
+</div>
+</div> 
+
+
+
+<div class="productselect">	
+				<select style="margin: 0 auto;" id="products" class="custom-select" name="products" onchange="addBox()">
+				<option selected value="hint">Produktauswahl</option>
+				</select>
+</div>
+
+</div> 
+
+
+
+<!--
+
 	<h1 style="text-align: center; margin-top: 30px;">"Da Bauernbua" Bestellungen</h1>
 	<br>
 	<br>
@@ -379,7 +408,6 @@ function roundPrice($price, $nearest = 5, $decimals = 2) {
 	<br>
 	<br>
 	<form id="form1" method="post" onsubmit="checkTotalValue(event)">
-		<input type="hidden" id="productCounter" name="productCounter" value="1"></input>
 		<div class="left">
 			<div id="personal" class="personalInfo">
 				<label>Vorname:</label>
@@ -418,46 +446,39 @@ function roundPrice($price, $nearest = 5, $decimals = 2) {
 				<br>
 				<br>
 				<div>
+-->
 					<!--
                      <input type="radio" name="deliveryCB" id="letdeliver" value="letdeliver" checked onclick="update(this)"> Liefern lassen (0 &euro; Aufpreis)<br>
                      <input type="radio" name="deliveryCB" id="collect" value="collect" onclick="update(this)"> Abholen
                      -->
+
+<!--
 				</div>
 			</div>
 		</div>
-		<div class="middle">
-			<div id="duplicater" class="items" style="margin-bottom: 30px;"> <span id="productH" class="productH">Produkt 1</span>
+-->
+
+		<div id="middle" class="middle" style="padding: 10px;">
+		<input type="hidden" id="productCounter" name="productCounter" value="1"></input>
+			<div id="duplicater" class="items" style="margin-bottom: 30px; display: none;">
 				<div class="productimgdiv">
 					<img id="productimg" class="img-fluid productimg" src="img/hint.png" alt="Produkt">
 				</div>
-				<select id="products" class="products custom-select" name="products" onchange="update()">
-				<option selected value="hint">Auswahl</option>
-				</select>
+				<span class="productname" style="font-weight: bold; display: block; text-align:center; margin-bottom: 10px;"></span>
 				<input type="number" id="number" class="number" name="number" value="0" min="0" onchange="update()" onkeypress="update(); return (event.keyCode!=13);">
 				<p class="unit">Kopf</p>
 				<div style="clear: both;"></div>
-				<div class="subtotal" align="center"> <span class="individualSubtotal">0</span><span> &euro;</span>
+				<div class="subtotal" align="center"> <span class="individualSubtotal">1</span><span> &euro;</span>
 				</div>
 					<div id="addProductDiv">
-						<button class="addbtn morebtn" style="background: #0080001f;" type="button" onclick="duplicate()">Produkt hinzufügen</button>
-						<button class="removebtn morebtn" style="display: none; background: #ff000038;" type="button" onclick="remove(this)">Produkt entfernen</button>
+						<button class="removebtn morebtn" style="display:block; background: #ff000038; margin: 0 auto;" type="button" onclick="remove(this)">Produkt entfernen</button>
 					</div>
 				</div>
 			</div>
 		</div>
 		<div class="right">
-			<div id="clipboard"> <span style="display: block; text-align: center; font-weight: bold;">Einkaufsliste</span>
-				<br> <span id="contents"></span>
-				<br>
-				<input type="checkbox" id="agb" required> <span style="text-transform: none; font-size: 15px;">Ich stimme den <a href="img/agb.pdf" target="blank">
-				AGB</a> und <a href="img/datenschutz.pdf" target=_blank">Datenschutzbestimmungen</a> zu</span>
-				<br>
-				<input id="submitbtn" type="submit" form="form1" name="submitbtn" value="Bestellen" onclick="changeID()">
-				<p style="font-size: 10px; color: #c40c0c;">Bitte haken Sie das Kästchen ganz oben links an!</p>
-			</div>
-		</div>
+				</div>
 	</form>
-
 	
 <script>
 
@@ -467,6 +488,14 @@ var pPrices = <?php echo json_encode($pPrices); ?> ;
 var pTypes = <?php echo json_encode($pTypes); ?> ; 
 var pUnits = <?php echo json_encode($pUnits); ?> ;
 var pimgName = <?php echo json_encode($pimgName); ?> ;
+
+
+function update() {
+
+
+
+
+}
 
 var minTotal = 5;
 
@@ -478,7 +507,6 @@ var boxes = []; // all boxes are stored in here
 var original = document.getElementById('duplicater'); 
 addOptions(products);
 var originalClone = original.cloneNode(true); // keep this as template for new boxes to clone from
-boxes.push(original); // add first box
 
 /*
  * Combine arrays received from PHP at same index
@@ -565,6 +593,38 @@ function duplicate() {
 
 }
 
+function addBox() {
+
+	i++;
+    var clone = originalClone.cloneNode(true); // "deep" clone from template where content is set to default
+	//change to right div
+	var middle = document.getElementById("middle");
+	boxes.push(clone);
+	clone.style.display = "block";
+	var selectBox = document.getElementById("products");
+	var name = selectBox.options[selectBox.selectedIndex].value;
+	var index = pNames.indexOf(name);
+	var imgName = products[index].imgname;
+	var productimg = clone.getElementsByClassName("productimg")[0];
+    updateImages(productimg, imgName);
+
+	var unitp = clone.getElementsByClassName("unit")[0];
+	var unit = products[index].unit; // get unit
+	unitp.innerHTML = unit; // update unit
+
+	clone.getElementsByClassName("productname")[0].innerHTML = name;
+	middle.appendChild(clone);
+
+    // hidden productCounter (for php) gets upated
+    document.getElementById("productCounter").value = i;
+
+   
+
+    // update clipboard with new entry of clone
+    update();
+
+}
+
 /*
  * Remove deleted box
  */
@@ -577,7 +637,6 @@ function remove(obj) {
 	box.parentNode.removeChild(box);
     document.getElementById("productCounter").value = boxes.length;
 
-	updateBtns();
 	update();
 
 }
@@ -602,68 +661,44 @@ function update() {
 
 	total = 0;
     var clipboard = ""; // shopping basket
-    var plz = document.getElementById("plz").value;
-
-
 
 	// update content inside every box
 	for(var i = 0; i < boxes.length; i++) {
 
 		var box = boxes[i];
 		updateID(box, i); // so PHP can talk to individual objects
-		var productH = box.getElementsByClassName("productH")[0];
-		var productimg = box.getElementsByClassName("productimg")[0];
-		var selectedProduct = box.getElementsByClassName("products")[0];
+		var selectedProduct = box.getElementsByClassName("productname")[0];
 		var number = box.getElementsByClassName("number")[0];
-		var unitp = box.getElementsByClassName("unit")[0];
 		var indivSubtotal = box.getElementsByClassName("individualSubtotal")[0];
 
-        productH.innerHTML = "Auswahl " + (i+1) + ". Produkt"; // update product-headings
-        var selectedProductName = selectedProduct.value; // value of selected product (its name)
-		if(selectedProductName == "hint" || quantity == 0) {
-			box.getElementsByClassName("addbtn")[0].disabled = true;
-			continue;
-		}
-		else
-			box.getElementsByClassName("addbtn")[0].disabled = false;
+        var selectedProductName = selectedProduct.innerHTML; // value of selected product (its name)
 		
 		var selectedProductIndex = pNames.indexOf(selectedProductName);
         var productPrice = products[selectedProductIndex].price;
         var quantity = number.value;
-		if(quantity == 0) 
-			box.getElementsByClassName("addbtn")[0].disabled = true;
 
-
-		var unit = products[selectedProductIndex].unit; // get unit
-		unitp.innerHTML = unit; // update unit
 
         var subtotal = productPrice * quantity;
         indivSubtotal.innerHTML = financial(subtotal);
 
-		var imgName = products[selectedProductIndex].imgname;
-        updateImages(productimg, imgName);
-
-		if(quantity == 0)
-			continue;
-
         total += subtotal;
 
-
+		var unit = products[selectedProductIndex].unit; // get unit
         // update clipboard content
-        clipboard = clipboard + quantity + "x " + selectedProduct.options[selectedProduct.selectedIndex].text +
+        clipboard = clipboard + quantity + "x " + selectedProductName +
             ' (' + unit + ')' + '<br><i>\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0' + financial(subtotal) + " &euro;</i><br>";
 	}
 
+	deliveryCost = 2.00;
     // calc deliveryCost
-    var deliveryCost = checkPLZ(plz);
-    clipboard = clipboard + "<br><br>Lieferung: +" + financial(deliveryCost) + " &euro;<br>";
+    clipboard = clipboard + "<br><br>Lieferung: +" + 2.00 + " &euro;<br>";
 
     // clipboard = changeDelivery(radiobtn, clipboard, deliveryCost);
     total += deliveryCost;
 
     clipboard = clipboard + "------------------------<br>";
     clipboard = clipboard + "<b>Gesamt: " + financial(total) + " &euro;</b><br>";
-    document.getElementById("contents").innerHTML = clipboard;
+    document.getElementById("clipboard").innerHTML = clipboard;
 
 }
 
@@ -673,8 +708,8 @@ function update() {
  */
 function updateID(box, index) {
 
-	var products = box.getElementsByClassName("products")[0];
-	products.setAttribute("name", "products" + index);
+	var products = box.getElementsByClassName("productname")[0];
+	products.setAttribute("name", "product" + index);
 
 	var number = box.getElementsByClassName("number")[0];
 	number.setAttribute("name", "number" + index);

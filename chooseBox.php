@@ -363,6 +363,47 @@ function roundPrice($price, $nearest = 5, $decimals = 2) {
 </head>
 
 <body>
+
+ <div class="flex-container">
+  <div>
+	<span class="boxesH">Gemuesekiste klein</span>
+	<p class="boxesp"> Die Gemuesekiste klein beinhaltet verschiedene regionale Produkte,
+		die gerade bei uns angebaut werden.</p>
+
+	<button class="orderbtn">Bestellen</button>
+
+  </div>
+  <div>
+
+	<span class="boxesH">Gemuesekiste mittel</span>
+	<p class="boxesp"> Die Gemuesekiste klein beinhaltet verschiedene regionale Produkte,
+		die gerade bei uns angebaut werden.</p>
+
+	<button class="orderbtn">Bestellen</button>
+
+
+</div>
+  <div>
+
+	<span class="boxesH">Gemuesekiste gross</span>
+	<p class="boxesp"> Die Gemuesekiste klein beinhaltet verschiedene regionale Produkte,
+		die gerade bei uns angebaut werden.</p>
+
+	<button class="orderbtn">Bestellen</button>
+
+</div>
+  <div>
+
+
+	<span class="boxesH">Gemuesekiste gross</span>
+	<p class="boxesp"> Sie koennen sich ihre Box auch selbst zusammenstellen! </p>
+
+	<button class="orderbtn"><a href="orders_new.php">Zusammenstellen</a></button>
+
+</div>
+</div> 
+<!--
+
 	<h1 style="text-align: center; margin-top: 30px;">"Da Bauernbua" Bestellungen</h1>
 	<br>
 	<br>
@@ -418,10 +459,13 @@ function roundPrice($price, $nearest = 5, $decimals = 2) {
 				<br>
 				<br>
 				<div>
+-->
 					<!--
                      <input type="radio" name="deliveryCB" id="letdeliver" value="letdeliver" checked onclick="update(this)"> Liefern lassen (0 &euro; Aufpreis)<br>
                      <input type="radio" name="deliveryCB" id="collect" value="collect" onclick="update(this)"> Abholen
                      -->
+
+<!--
 				</div>
 			</div>
 		</div>
@@ -457,7 +501,7 @@ function roundPrice($price, $nearest = 5, $decimals = 2) {
 			</div>
 		</div>
 	</form>
-
+-->
 	
 <script>
 
